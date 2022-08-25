@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  broker:
+    container_name: celery-broker
+    image: rabbitmq:3.8.18-management-alpine
+    ports:
+      - 8080:15672
+      - 5672:5672
+    networks:
+      - network
+
+  backend:
+    container_name: celery-backend
+    image: redis:6.2.4
+    ports:
+      - 6379:6379
+    networks:
+      - network
+    command: redis-server --requirepass password
+
+  imagery_worker:
+    build: ./src/workers/imagery
+    container_name: celery-imagery
+    env_file:
+      - 'variables.env'
+    volumes:
+      - '${DATASET_PATH}/images:/workers/data'
+    environment:
+      - BUCKET_NAME=fashion-tasks
+      - DATA_FOLDER=data
+    links:
+      - backend:backend
+      - broker:broker
+      - database:database
+    depends_on:
+      - broker
+      - backend
+      - database
+    networks:
+      - network
+    command: celery worker -A worker.imagery -P threads --loglevel=INFO --queues=imagery
+
+  inference_worker:
+    build:
+      context: ./src/workers/inference
+      shm_size: '2gb'
+    container_name: celery-inference
+    env_file:
+      - 'variables.env'
+    volumes:
+      - '${DATASET_PATH}/images:/workers/data'
+    environment:
+      - BUCKET_NAME=fashion-tasks
+      - DATA_FOLDER=data
+      - INFERENCE_DEVICE=cpu
+      - BATCH_SIZE=10
+      - NUM_WORKERS=2
+    links:
+      - backend:backend
+      - broker:broker
+    networks:
+      - network
+    depends_on:
+      - imagery_worker
+    command: celery worker -A worker.inference -P threads --loglevel=INFO --queues=inference
+
+  api:
+    build: ./src/api
+    container_name: fashion-api
+    env_file:
+      - 'variables.env'
+    links:
+      - backend:backend
+      - broker:broker
+    depends_on:
+      - imagery_worker
+      - inference_worker
+      - localstack
+    ports:
+      - 5000:5000
+    networks:
+      - network
+
+  client:
+    build: ./src/client
+    container_name: fashion-client
+    volumes:
+      - ./src/client/notebooks:/home/jovyan/notebooks
+    ports:
+      - 8888:8888
+    env_file:
+      - 'variables.env'
+    links:
+      - backend:backend
+      - broker:broker
+      - api:api
+      - localstack:localstack
+    depends_on:
+      - localstack
+      - api
+    networks:
+      - network
+
+  database:
+    build: ./src/database
+    env_file:
+      - 'variables.env'
+    volumes:
+      - ${TEMP_FOLDER}/database:/tmp/database
+    networks:
+      - network
+
+  localstack:
+    image: localstack/localstack:0.12.13
+    environment:
+      SERVICES: s3
+      DATA_DIR: /tmp/localstack/data
+    volumes:
+      - '${DATASET_PATH}/images:/tmp/localstack/dataset'
+      - './src/localstack:/docker-entrypoint-initaws.d'
+    networks:
+      - network
+
+networks:
+    network: {}
