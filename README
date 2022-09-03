@@ -1,0 +1,55 @@
+- Cloud Run is a fully-managed compute platform that is suitable for deploying containerized applications
+- Cloud Run allows user to write their script based on the user's favorite programming language then push it and package it as a container with Cloud Build. Compare with Cloud Function which only supports one request at a time, Cloud Run is able to be configured to support multiple concurrent requests on a single container instance which allows to save time and save cost.
+
+
+##################### Virtual Env
+conda create -yn tcc-env 'python=3.7'
+conda activate tcc-env 
+pip install -r requirements.txt
+pip install jupyter
+
+
+jupyter notebook
+
+##################### Google Cloud
+# Create the cluster - to run in Cloud Shell
+gcloud config set project tcc-lucas-pierre
+gcloud compute zones list | us-east1
+gcloud config set compute/region us-east1
+
+gcloud container clusters create-auto tcc-cluster \
+    --project=tcc-lucas-pierre \
+    --region=us-east1
+
+gcloud container clusters get-credentials tcc-cluster --region us-east1
+
+# Deploy an application to the cluster
+
+## Create the Deployment
+kubectl create deployment hello-server \
+    --image=us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0
+
+## Expose the Deployment
+kubectl expose deployment hello-server --type LoadBalancer --port 80 --target-port 8080
+
+
+# Deploy the container in Kubernetes cluster
+docker build -t gcr.io/tcc-lucas-pierre/yolo:v2 .
+docker run -it -p 80:80 gcr.io/tcc-lucas-pierre/yolo:v2
+
+## Third command is pushing our container to a registry which we prefer not Docker Hub, Google Container Registry (gcr.io)
+docker push gcr.io/tcc-lucas-pierre/yolo:v2
+
+## If you are not logged in before third command, open terminal, type
+gcloud init
+gcloud services enable containerregistry.googleapis.com
+gcloud auth login
+gcloud auth configure-docker
+
+
+If you wanna see the all running nodes you can type:
+kubectl get nodes -A
+
+kubectl apply -f yolo/build.yaml
+kubectl get deployments
+kubectl expose deployment hello-server --type LoadBalancer --port 80 --target-port 8080
