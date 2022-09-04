@@ -53,3 +53,99 @@ kubectl get nodes -A
 kubectl apply -f yolo/build.yaml
 kubectl get deployments
 kubectl expose deployment hello-server --type LoadBalancer --port 80 --target-port 8080
+
+
+##################### Prepare data folders to test client
+Download these files and put them in a folder located at the path DATASET_PATH
+.
+└── fashion-dataset
+    ├── images
+    │   ├── 10000.jpg
+    │   ├── 10001.jpg
+    │   └── 10003.jpg
+    ├── images.csv
+    ├── styles
+    │   ├── 10000.json
+    │   ├── 10001.json
+    │   └── 10003.json
+    └── styles.csv
+
+
+##################### Makefile deploy locally
+make build
+
+# built these images:
+tcc-mba-ml-in-prod_client             latest    31e9c16c1253   2 hours ago    1.33GB
+tcc-mba-ml-in-prod_api                latest    9a0fb3655b0a   2 hours ago    196MB
+tcc-mba-ml-in-prod_inference_worker   latest    c05ea157c0c7   2 hours ago    6.89GB
+tcc-mba-ml-in-prod_imagery_worker     latest    5844237a57ef   3 hours ago    853MB
+tcc-mba-ml-in-prod_database           latest    09be6b798c6e   3 hours ago    315MB
+
+make up
+
+# ran these containers:
+a1cd3095e929   tcc-mba-ml-in-prod_client             "tini -g -- start-no…"   18 seconds ago   Up 16 seconds (healthy)   0.0.0.0:8888->8888/tcp                                                                                       fashion-client
+fb9345a032b9   tcc-mba-ml-in-prod_api                "/bin/sh -c 'uvicorn…"   19 seconds ago   Up 17 seconds             5672/tcp, 0.0.0.0:5000->5000/tcp, 6379/tcp                                                                   fashion-api
+16c101cf0498   tcc-mba-ml-in-prod_inference_worker   "celery worker -A wo…"   20 seconds ago   Up 18 seconds             5672/tcp, 6379/tcp                                                                                           celery-inference
+5b808dcf16f0   tcc-mba-ml-in-prod_imagery_worker     "celery worker -A wo…"   21 seconds ago   Up 19 seconds             5672/tcp, 6379/tcp                                                                                           celery-imagery
+25f0fab01333   rabbitmq:3.8.18-management-alpine     "docker-entrypoint.s…"   22 seconds ago   Up 20 seconds             4369/tcp, 5671/tcp, 15671/tcp, 15691-15692/tcp, 25672/tcp, 0.0.0.0:5672->5672/tcp, 0.0.0.0:8080->15672/tcp   celery-broker
+d48437322926   tcc-mba-ml-in-prod_database           "docker-entrypoint.s…"   22 seconds ago   Up 20 seconds             5432/tcp                                                                                                     tcc-mba-ml-in-prod_database_1
+60008d37e0ce   redis:6.2.4                           "docker-entrypoint.s…"   22 seconds ago   Up 20 seconds             0.0.0.0:6379->6379/tcp                                                                                       celery-backend
+a3cbf1dcdd7e   localstack/localstack:0.12.13         "docker-entrypoint.sh"   22 seconds ago   Up 20 seconds             4566/tcp, 4571/tcp, 5678/tcp, 8080/tcp                                                                       tcc-mba-ml-in-prod_localstack_1
+
+
+##################### Step 1 - Deploy API locally
+cd ~/dev/perso/mba_ml_in_prod/tcc/tcc-mba-ml-in-prod/src/api
+docker build -t gcr.io/tcc-lucas-pierre/tcc-api .
+docker run -it -p 5000:5000 gcr.io/tcc-lucas-pierre/tcc-api
+
+# Third command is pushing our container to a registry which we prefer not Docker Hub, Google Container Registry (gcr.io)
+docker push gcr.io/tcc-lucas-pierre/tcc-api
+
+##################### Step 2 - Deploy database locally
+cd ~/dev/perso/mba_ml_in_prod/tcc/tcc-mba-ml-in-prod/src/database
+docker build -t gcr.io/tcc-lucas-pierre/tcc-database .
+docker run -it -p 5000:5000 gcr.io/tcc-lucas-pierre/tcc-database
+
+# Third command is pushing our container to a registry which we prefer not Docker Hub, Google Container Registry (gcr.io)
+docker push gcr.io/tcc-lucas-pierre/tcc-database
+
+
+
+
+##################### Some code to interact with
+
+# Localstack
+s3 = s3fs.S3FileSystem(client_kwargs={'endpoint_url': f'http://{os.getenv("S3_HOST")}:4566'})
+
+list(s3.walk("fashion-datasets"))
+[('fashion-datasets', ['dataset-v1'], []),
+ ('fashion-datasets/dataset-v1', [], ['10000.jpg', '10001.jpg', '10003.jpg'])]
+
+
+
+##################### FLOW
+flow:
+- request for a specific cloth 
+-- "{API_ENDPOINT}/filter"
+--- src/api/main.py
+@app.post("/filter", status_code=201)
+task = tasks.send_task(name="filter",...
+# this creates a task using Celery
+--- src/workers/imagery/worker.py
+@imagery.task(bind=True, name="filter")
+result = psql.filter_products(query=query)...
+upload(result=result, s3_obj=s3_obj, s3_target=s3_target)...
+# this retrieves required data from PostrgeSQL and then
+# this uploads the metadata + the processed data to a new s3 folder named after task's id
+
+-- '{API_ENDPOINT}/task/{task_id}'
+--- src/api/main.py
+@app.get("/task/{task_id}", status_code=200)
+async wait for the result of the task previously sent to Celery
+
+
+##################### QUESTIONS
+# QUESTION
+why do we do this?
+awslocal s3 sync /tmp/localstack/dataset s3://fashion-datasets/dataset-v1

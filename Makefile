@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 export TEMP_FOLDER = ./tmp
-export DATASET_PATH = ./data
+# export DATASET_PATH = ./data
+export DATASET_PATH = ~/dev/perso/mba_ml_in_prod/tcc/tcc-data/fashion-dataset
 
 build:
 	pip install -r requirements.txt
