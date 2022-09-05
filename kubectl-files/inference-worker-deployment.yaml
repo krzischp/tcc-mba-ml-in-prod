@@ -1,0 +1,160 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: inference-worker
+  name: inference-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: inference-worker
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/network: "true"
+        io.kompose.service: inference-worker
+    spec:
+      containers:
+        - args:
+            - celery
+            - worker
+            - -A
+            - worker.inference
+            - -P
+            - threads
+            - --loglevel=INFO
+            - --queues=inference
+          env:
+            - name: API_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: API_HOST
+                  name: variables-env
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                configMapKeyRef:
+                  key: AWS_ACCESS_KEY_ID
+                  name: variables-env
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                configMapKeyRef:
+                  key: AWS_SECRET_ACCESS_KEY
+                  name: variables-env
+            - name: BATCH_SIZE
+              value: "10"
+            - name: BROKER_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: BROKER_URL
+                  name: variables-env
+            - name: BUCKET_NAME
+              value: fashion-tasks
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: DATABASE_URL
+                  name: variables-env
+            - name: DATA_FOLDER
+              value: data
+            - name: INFERENCE_DEVICE
+              value: cpu
+            - name: NUM_WORKERS
+              value: "2"
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRES_DB
+                  name: variables-env
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRES_HOST
+                  name: variables-env
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRES_PASSWORD
+                  name: variables-env
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRES_PORT
+                  name: variables-env
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRES_USER
+                  name: variables-env
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: RABBITMQ_HOST
+                  name: variables-env
+            - name: RABBITMQ_PASS
+              valueFrom:
+                configMapKeyRef:
+                  key: RABBITMQ_PASS
+                  name: variables-env
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: RABBITMQ_PORT
+                  name: variables-env
+            - name: RABBITMQ_USER
+              valueFrom:
+                configMapKeyRef:
+                  key: RABBITMQ_USER
+                  name: variables-env
+            - name: REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  key: REDIS_DB
+                  name: variables-env
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: REDIS_HOST
+                  name: variables-env
+            - name: REDIS_PASS
+              valueFrom:
+                configMapKeyRef:
+                  key: REDIS_PASS
+                  name: variables-env
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: REDIS_PORT
+                  name: variables-env
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: REDIS_URL
+                  name: variables-env
+            - name: S3_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: S3_HOST
+                  name: variables-env
+          image: gcr.io/tcc-lucas-pierre/inference_worker
+          name: celery-inference
+          resources: {}
+          volumeMounts:
+            - mountPath: /workers/data
+              name: inference-worker-claim0
+      restartPolicy: Always
+      volumes:
+        - name: inference-worker-claim0
+          persistentVolumeClaim:
+            claimName: inference-worker-claim0
+status: {}

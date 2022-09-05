@@ -1,0 +1,28 @@
+apiVersion: v1
+data:
+  API_HOST: api
+  AWS_ACCESS_KEY_ID: dump
+  AWS_SECRET_ACCESS_KEY: dump
+  BROKER_URL: amqp://guest:guest@broker:5672
+  DATABASE_URL: postgresql://fashion_user:fashion_pass@database:5432/fashion_db
+  POSTGRES_DB: fashion_db
+  POSTGRES_HOST: database
+  POSTGRES_PASSWORD: fashion_pass
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: fashion_user
+  RABBITMQ_HOST: broker
+  RABBITMQ_PASS: guest
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: guest
+  REDIS_DB: "0"
+  REDIS_HOST: backend
+  REDIS_PASS: password
+  REDIS_PORT: "6379"
+  REDIS_URL: redis://:password@backend:6379/0
+  S3_HOST: localstack
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: api-variables-env
+  name: variables-env

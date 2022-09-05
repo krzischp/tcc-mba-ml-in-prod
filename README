@@ -14,12 +14,18 @@ jupyter notebook
 ##################### Google Cloud
 # Create the cluster - to run in Cloud Shell
 gcloud config set project tcc-lucas-pierre
-gcloud compute zones list | us-east1
+gcloud compute zones list | grep us-east1
 gcloud config set compute/region us-east1
 
 gcloud container clusters create-auto tcc-cluster \
     --project=tcc-lucas-pierre \
     --region=us-east1
+
+# https://cloud.google.com/sdk/gcloud/reference/container/clusters/create-auto#--network
+
+# to delete it:
+gcloud container clusters delete --region=us-east1 tcc-cluster
+
 
 gcloud container clusters get-credentials tcc-cluster --region us-east1
 
@@ -92,23 +98,164 @@ fb9345a032b9   tcc-mba-ml-in-prod_api                "/bin/sh -c 'uvicorn…"   
 d48437322926   tcc-mba-ml-in-prod_database           "docker-entrypoint.s…"   22 seconds ago   Up 20 seconds             5432/tcp                                                                                                     tcc-mba-ml-in-prod_database_1
 60008d37e0ce   redis:6.2.4                           "docker-entrypoint.s…"   22 seconds ago   Up 20 seconds             0.0.0.0:6379->6379/tcp                                                                                       celery-backend
 a3cbf1dcdd7e   localstack/localstack:0.12.13         "docker-entrypoint.sh"   22 seconds ago   Up 20 seconds             4566/tcp, 4571/tcp, 5678/tcp, 8080/tcp                                                                       tcc-mba-ml-in-prod_localstack_1
+# these image names are because of the subfolder name tcc-mba-ml-in-prod and because of the name in docker-compose file (client, etc)
+# but then we renamed them with image keyword in compose yaml file
+
+
+# push to Google Container Registry
+gcloud services enable containerregistry.googleapis.com
+gcloud auth login
+
+# (--pull so we always attempt to pull a newer version of the image)
+docker-compose build --pull
+docker-compose push
+
+# convert docker-compose.yaml to files kubectl to be executed by kubectl
+kompose convert
+# this will generate these files:
+WARN Volume mount on the host "/Users/pierre.krzisch/dev/perso/mba_ml_in_prod/tcc/tcc-mba-ml-in-prod/src/client/notebooks" isn't supported - ignoring path on the host 
+INFO Network network is detected at Source, shall be converted to equivalent NetworkPolicy at Destination 
+WARN Service "database" won't be created because 'ports' is not specified 
+WARN Volume mount on the host "/database" isn't supported - ignoring path on the host 
+INFO Network network is detected at Source, shall be converted to equivalent NetworkPolicy at Destination 
+WARN Service "imagery_worker" won't be created because 'ports' is not specified 
+WARN Volume mount on the host "/images" isn't supported - ignoring path on the host 
+INFO Network network is detected at Source, shall be converted to equivalent NetworkPolicy at Destination 
+WARN Service "inference_worker" won't be created because 'ports' is not specified 
+WARN Volume mount on the host "/images" isn't supported - ignoring path on the host 
+INFO Network network is detected at Source, shall be converted to equivalent NetworkPolicy at Destination 
+WARN Service "localstack" won't be created because 'ports' is not specified 
+WARN Volume mount on the host "/images" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/Users/pierre.krzisch/dev/perso/mba_ml_in_prod/tcc/tcc-mba-ml-in-prod/src/localstack" isn't supported - ignoring path on the host 
+
+
+# to execute in Google Cloud editor:
+kubectl apply -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,imagery-worker-claim0-persistentvolumeclaim.yaml,imagery-worker-deployment.yaml,inference-worker-claim0-persistentvolumeclaim.yaml,inference-worker-deployment.yaml,localstack-claim0-persistentvolumeclaim.yaml,localstack-claim1-persistentvolumeclaim.yaml,localstack-deployment.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
+
+# Output:
+deployment.apps/api created
+service/api created
+
+deployment.apps/backend created
+service/backend created
+
+deployment.apps/broker created
+service/broker created
+persistentvolumeclaim/client-claim0 created
+
+deployment.apps/client created
+service/client created
+persistentvolumeclaim/database-claim0 created
+
+deployment.apps/database created
+persistentvolumeclaim/imagery-worker-claim0 created
+
+deployment.apps/imagery-worker created
+persistentvolumeclaim/inference-worker-claim0 created
+
+deployment.apps/inference-worker created
+persistentvolumeclaim/localstack-claim0 created
+persistentvolumeclaim/localstack-claim1 created
+
+deployment.apps/localstack created
+networkpolicy.networking.k8s.io/network created
+configmap/variables-env created
+
+# check created objects
+kubectl get nodes -A
+kubectl get deployments
+kubectl get services
+kubectl get pod -n default
+
+
+debug pod in CrashLoopBackOff status
+kubectl describe pod -n default database-546f6fbf66-9h99c
+
+# how to deal with insufficient resource problem:
+# https://containersolutions.github.io/runbooks/posts/kubernetes/0-nodes-available-insufficient/
+
+kubectl describe nodes
+# check nodes resources usage
+kubectl top nodes
+
+kubectl describe node gk3-tcc-cluster-nap-x19d6wp9-c937c85b-llwp | less
+
+kubectl get pods
+kubectl logs database-546f6fbf66-9h99c
+
+
+kubectl delete -f tcc-mba-ml-in-prod/database-deployment.yaml
+kubectl apply -f tcc-mba-ml-in-prod/database-deployment.yaml
+
+kubectl delete -f tcc-mba-ml-in-prod/imagery-worker-deployment.yaml
+kubectl apply -f tcc-mba-ml-in-prod/imagery-worker-deployment.yaml
+
+kubectl delete -f tcc-mba-ml-in-prod/network-networkpolicy.yaml
+kubectl apply -f tcc-mba-ml-in-prod/network-networkpolicy.yaml
+
+TODO:
+solve problem
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not translate host name "database" to address: Name or service not known
+in imagery-worker-deployment.yaml
+
+
+kubectl describe pod -n default database-6cd55c4bb6-5pbnd
+
+# Network policy in Kubernetes
+# https://banzaicloud.com/blog/network-policy/
+Important: after creating Kubernetes objects with kubectl, then add this code to tcc-mba-ml-in-prod/network-networkpolicy.yaml
+
+egress:
+- to:
+    - podSelector:
+        matchLabels:
+            io.kompose.network/network: "true"
+
+
+
 
 
 ##################### Step 1 - Deploy API locally
 cd ~/dev/perso/mba_ml_in_prod/tcc/tcc-mba-ml-in-prod/src/api
-docker build -t gcr.io/tcc-lucas-pierre/tcc-api .
-docker run -it -p 5000:5000 gcr.io/tcc-lucas-pierre/tcc-api
+docker build -t gcr.io/tcc-lucas-pierre/api .
+docker run -it -p 5000:5000 gcr.io/tcc-lucas-pierre/api
 
 # Third command is pushing our container to a registry which we prefer not Docker Hub, Google Container Registry (gcr.io)
 docker push gcr.io/tcc-lucas-pierre/tcc-api
 
 ##################### Step 2 - Deploy database locally
 cd ~/dev/perso/mba_ml_in_prod/tcc/tcc-mba-ml-in-prod/src/database
-docker build -t gcr.io/tcc-lucas-pierre/tcc-database .
-docker run -it -p 5000:5000 gcr.io/tcc-lucas-pierre/tcc-database
+docker build -t gcr.io/tcc-lucas-pierre/database .
+docker run -it -p 5000:5000 gcr.io/tcc-lucas-pierre/database
 
 # Third command is pushing our container to a registry which we prefer not Docker Hub, Google Container Registry (gcr.io)
-docker push gcr.io/tcc-lucas-pierre/tcc-database
+docker push gcr.io/tcc-lucas-pierre/database
+
+
+# How to add data in PVC when pode related to it doesn't exist yet?
+
+
+# Use the COPY FROM STDIN command to import data from a text or CSV file into a PostgreSQL-dialect database
+cat mydata.csv | psql -h localhost \
+  -c "COPY mytable FROM STDIN WITH (FORMAT csv, ESCAPE '~', HEADER TRUE);"
+
+
+# TODO:
+Except for Postrgesql, copy all files, declared via DATASET_PATH in docker compose, to mounted PVC with this command line:
+# copy data.csv to the pod that uses the persistent volume:
+kubectl cp tmp/database/data.csv default/database-6cd55c4bb6-qdxpz:/tmp/database/data.csv
+
+
+# TODO: solve Problem with imagery-worker pod that cannot find database - when create_engine(DATABASE_URL)
+    raise exception
+  File "/usr/local/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 656, in __connect
+    connection = pool._invoke_creator(self)
+  File "/usr/local/lib/python3.7/site-packages/sqlalchemy/engine/strategies.py", line 114, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/usr/local/lib/python3.7/site-packages/sqlalchemy/engine/default.py", line 508, in connect
+    return self.dbapi.connect(*cargs, **cparams)
+  File "/usr/local/lib/python3.7/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
 
 
 

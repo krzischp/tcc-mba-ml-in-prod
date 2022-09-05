@@ -20,6 +20,7 @@ services:
     command: redis-server --requirepass password
 
   imagery_worker:
+    image: gcr.io/tcc-lucas-pierre/imagery_worker
     build: ./src/workers/imagery
     container_name: celery-imagery
     env_file:
@@ -42,6 +43,7 @@ services:
     command: celery worker -A worker.imagery -P threads --loglevel=INFO --queues=imagery
 
   inference_worker:
+    image: gcr.io/tcc-lucas-pierre/inference_worker
     build:
       context: ./src/workers/inference
       shm_size: '2gb'
@@ -66,6 +68,7 @@ services:
     command: celery worker -A worker.inference -P threads --loglevel=INFO --queues=inference
 
   api:
+    image: gcr.io/tcc-lucas-pierre/api
     build: ./src/api
     container_name: fashion-api
     env_file:
@@ -83,6 +86,7 @@ services:
       - network
 
   client:
+    image: gcr.io/tcc-lucas-pierre/client
     build: ./src/client
     container_name: fashion-client
     volumes:
@@ -103,6 +107,7 @@ services:
       - network
 
   database:
+    image: gcr.io/tcc-lucas-pierre/database
     build: ./src/database
     env_file:
       - 'variables.env'
