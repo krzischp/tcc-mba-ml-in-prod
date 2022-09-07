@@ -12,6 +12,10 @@ gcloud container clusters create-auto tcc-cluster \
 
 gcloud container clusters get-credentials tcc-cluster --region us-east1
 
+# Create cluster without autopilot
+
+gcloud container clusters create tcc-cluster --project=tcc-lucas-pierre --region=us-east1 --num-nodes=2 --preemptible
+
 # to delete the cluster:
 gcloud container clusters delete --region=us-east1 tcc-cluster
 
@@ -19,7 +23,7 @@ gcloud container clusters delete --region=us-east1 tcc-cluster
 ##################### Cluster creation in Google Cloud Editor
 # first drag and drop the files in kubectl-files from your local to Google Cloud editor's file system
 # then execute the following command line in Google Cloud editor:
-kubectl apply -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,imagery-worker-claim0-persistentvolumeclaim.yaml,imagery-worker-deployment.yaml,inference-worker-claim0-persistentvolumeclaim.yaml,inference-worker-deployment.yaml,localstack-claim0-persistentvolumeclaim.yaml,localstack-claim1-persistentvolumeclaim.yaml,localstack-deployment.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
+kubectl apply -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,database-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,imagery-worker-claim0-persistentvolumeclaim.yaml,imagery-worker-deployment.yaml,inference-worker-claim0-persistentvolumeclaim.yaml,inference-worker-deployment.yaml,localstack-claim0-persistentvolumeclaim.yaml,localstack-claim1-persistentvolumeclaim.yaml,localstack-deployment.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
 
 
 # Current issue:
