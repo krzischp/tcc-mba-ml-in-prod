@@ -5,10 +5,7 @@ metadata:
   name: network
 spec:
   ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              io.kompose.network/network: "true"
+    - from: []
   podSelector:
     matchLabels:
       io.kompose.network/network: "true"

@@ -149,12 +149,5 @@ spec:
           image: gcr.io/tcc-lucas-pierre/inference_worker
           name: celery-inference
           resources: {}
-          volumeMounts:
-            - mountPath: /workers/data
-              name: inference-worker-claim0
       restartPolicy: Always
-      volumes:
-        - name: inference-worker-claim0
-          persistentVolumeClaim:
-            claimName: inference-worker-claim0
 status: {}

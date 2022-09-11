@@ -112,6 +112,7 @@ docker-compose push
 
 # convert docker-compose.yaml to files kubectl to be executed by kubectl
 kompose convert
+kompose convert --volumes hostPath
 # this will generate these files:
 WARN Volume mount on the host "/Users/pierre.krzisch/dev/perso/mba_ml_in_prod/tcc/tcc-mba-ml-in-prod/src/client/notebooks" isn't supported - ignoring path on the host 
 INFO Network network is detected at Source, shall be converted to equivalent NetworkPolicy at Destination 
@@ -166,7 +167,7 @@ kubectl get nodes -A
 kubectl get deployments
 kubectl get services
 kubectl get pod -n default
-
+kubectl get networkpolicy
 
 debug pod in CrashLoopBackOff status
 kubectl describe pod -n default database-546f6fbf66-9h99c
@@ -181,17 +182,17 @@ kubectl top nodes
 kubectl describe node gk3-tcc-cluster-nap-x19d6wp9-c937c85b-llwp | less
 
 kubectl get pods
-kubectl logs database-546f6fbf66-9h99c
+kubectl logs client-567dcf5cff-grxxf
 
 
-kubectl delete -f tcc-mba-ml-in-prod/database-deployment.yaml
-kubectl apply -f tcc-mba-ml-in-prod/database-deployment.yaml
-
-kubectl delete -f tcc-mba-ml-in-prod/imagery-worker-deployment.yaml
-kubectl apply -f tcc-mba-ml-in-prod/imagery-worker-deployment.yaml
+kubectl delete -f tcc-mba-ml-in-prod/client-deployment.yaml
+kubectl apply -f tcc-mba-ml-in-prod/client-deployment.yaml
 
 kubectl delete -f tcc-mba-ml-in-prod/network-networkpolicy.yaml
 kubectl apply -f tcc-mba-ml-in-prod/network-networkpolicy.yaml
+
+kubectl delete -f tcc-mba-ml-in-prod/localstack-deployment.yaml
+kubectl apply -f tcc-mba-ml-in-prod/localstack-deployment.yaml
 
 TODO:
 solve problem
@@ -200,19 +201,6 @@ in imagery-worker-deployment.yaml
 
 
 kubectl describe pod -n default database-6cd55c4bb6-5pbnd
-
-# Network policy in Kubernetes
-# https://banzaicloud.com/blog/network-policy/
-Important: after creating Kubernetes objects with kubectl, then add this code to tcc-mba-ml-in-prod/network-networkpolicy.yaml
-
-egress:
-- to:
-    - podSelector:
-        matchLabels:
-            io.kompose.network/network: "true"
-
-
-
 
 
 ##################### Step 1 - Deploy API locally

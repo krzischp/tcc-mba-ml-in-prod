@@ -35,16 +35,11 @@ spec:
           name: localstack
           resources: {}
           volumeMounts:
-            - mountPath: /tmp/localstack/dataset
+            - mountPath: /tmp/localstack
               name: localstack-claim0
-            - mountPath: /docker-entrypoint-initaws.d
-              name: localstack-claim1
       restartPolicy: Always
       volumes:
         - name: localstack-claim0
           persistentVolumeClaim:
             claimName: localstack-claim0
-        - name: localstack-claim1
-          persistentVolumeClaim:
-            claimName: localstack-claim1
 status: {}

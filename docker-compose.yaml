@@ -115,6 +115,8 @@ services:
       - ${TEMP_FOLDER}/database:/tmp/database
     networks:
       - network
+    ports:
+    - 5432:5432
 
   localstack:
     image: localstack/localstack:0.12.13
@@ -126,6 +128,8 @@ services:
       - './src/localstack:/docker-entrypoint-initaws.d'
     networks:
       - network
+    ports:
+    - 4566:4566
 
 networks:
     network: {}

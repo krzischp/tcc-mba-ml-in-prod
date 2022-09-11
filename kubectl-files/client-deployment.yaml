@@ -127,15 +127,19 @@ spec:
                 configMapKeyRef:
                   key: S3_HOST
                   name: variables-env
-          image: gcr.io/tcc-lucas-pierre/client
+          image: gcr.io/tcc-lucas-pierre/client:latest
           name: fashion-client
           ports:
             - containerPort: 8888
           resources: {}
           volumeMounts:
-            - mountPath: /home/jovyan/notebooks
+            - mountPath: /home/jovyan/data
               name: client-claim0
       restartPolicy: Always
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
       volumes:
         - name: client-claim0
           persistentVolumeClaim:
