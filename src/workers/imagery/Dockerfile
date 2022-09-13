@@ -1,8 +1,9 @@
 FROM python:3.7-slim
 
 COPY /requirements.txt /tmp/requirements.txt
-
 ENV APP_DIR='/workers'
+COPY /tcc-lucas-pierre-7490c66905ca.json $APP_DIR/tcc-lucas-pierre-7490c66905ca.json
+ENV GOOGLE_APPLICATION_CREDENTIALS=$APP_DIR/tcc-lucas-pierre-7490c66905ca.json
 WORKDIR $APP_DIR
 
 RUN apt-get update -yqq && \
@@ -13,5 +14,4 @@ RUN apt-get update -yqq && \
 
 ADD /app $APP_DIR/app/
 ADD worker.py $APP_DIR/
-
 EXPOSE 6379 5672

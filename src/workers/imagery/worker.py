@@ -3,9 +3,11 @@ import json
 import os
 import random
 from typing import Any, Dict, List
+from google.cloud import storage
 
 import albumentations as A
 import cv2
+import json
 import numpy as np
 import s3fs
 from PIL import Image
@@ -24,8 +26,48 @@ imagery = Celery(
 )
 psql = PostgreDB()
 
+# UPDATE
+def rename_blob(bucket_name, blob_name, new_name):
+    """Renames a blob."""
+    # The ID of your GCS bucket
+    # bucket_name = "your-bucket-name"
+    # The ID of the GCS object to rename
+    # blob_name = "your-object-name"
+    # The new ID of the GCS object
+    # new_name = "new-object-name"
 
-def upload(result: List[dict], s3_obj, s3_target: str):
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+
+    new_blob = bucket.rename_blob(blob, new_name)
+
+    print(f"Blob {blob.name} has been renamed to {new_blob.name}")
+
+
+def upload_blob_from_memory(bucket_name, contents, destination_blob_name):
+    """Uploads a file to the bucket."""
+
+    # The ID of your GCS bucket
+    # bucket_name = "your-bucket-name"
+
+    # The contents to upload to the file
+    # contents = "these are my contents"
+
+    # The ID of your GCS object
+    # destination_blob_name = "storage-object-name"
+
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    blob.upload_from_string(contents, content_type="application/json")
+
+    print(
+        f"{destination_blob_name} with contents {contents} uploaded to {bucket_name}."
+    )
+
+def upload(result: List[dict], s3_target: str):
     """
     Uploads metadata and images for every run in s3.\
 
@@ -37,14 +79,16 @@ def upload(result: List[dict], s3_obj, s3_target: str):
     logger.info("Uploading metadata and images")
 
     # NOTE: example location to store the images
-    with s3_obj.open(f"{s3_target}/metadata.json", "w") as meta_f:
-        json.dump(result, meta_f)
+    bucket_name = "tcc-clothes"
+    destination_blob_name = f"{s3_target}/metadata.json"
+    upload_blob_from_memory(bucket_name, json.dumps(result), destination_blob_name)
 
     for res in result:
         image_id = res["image_id"]
         logger.info(f"Uploading {image_id}.jpg")
-        s3_obj.cp(f"s3://fashion-datasets/dataset-v1/{image_id}.jpg",
-                  f"{s3_target}/images/{image_id}.jpg")
+        blob_name = f"fashion-datasets/dataset-v1/{image_id}.jpg"
+        new_name = f"{s3_target}/images/{image_id}.jpg"
+        rename_blob(bucket_name, blob_name, new_name)
 
 
 def run_augmentations(aug_conf: dict, result: List[dict], s3_obj, s3_target: str):
@@ -91,12 +135,14 @@ def filter_task(self, **kwargs) -> Dict[str, Any]:
     """
     query = kwargs.get("query")
     aug_conf = kwargs.get("aug_config")
-    s3_obj = s3fs.S3FileSystem(client_kwargs={"endpoint_url": f"http://{S3_HOST}:4566"})
-    s3_target = f"s3://{BUCKET_NAME}/{self.request.id}"
+    s3_target = f"{BUCKET_NAME}/{self.request.id}"
     result = psql.filter_products(query=query)
-    upload(result=result, s3_obj=s3_obj, s3_target=s3_target)
-    if aug_conf:
-        logger.info("Starting augmentation")
-        run_augmentations(aug_conf=aug_conf, s3_target=s3_target, s3_obj=s3_obj, result=result)
-
-    return {"s3_target": s3_target}
+    try:
+        upload(result=result, s3_target=s3_target)
+        if aug_conf:
+            logger.info("Starting augmentation")
+            run_augmentations(aug_conf=aug_conf, s3_target=s3_target, s3_obj=s3_obj, result=result)
+        return {"s3_target": s3_target}
+    except Exception as e:
+        # TO DEBUG Celery queue event
+        return {"s3_target": e}

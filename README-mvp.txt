@@ -38,6 +38,9 @@ docker-compose push
 
 # or same thing for one image only:
 docker build -t gcr.io/tcc-lucas-pierre/client .
+docker build -t gcr.io/tcc-lucas-pierre/imagery_worker .
+docker-compose build imagery_worker
+docker-compose up
 docker run -it -p 8888:8888 gcr.io/tcc-lucas-pierre/client
 
 docker push gcr.io/tcc-lucas-pierre/client
@@ -86,3 +89,10 @@ We can then access 34.139.26.116:80 in this case.
 # TODO:
 - change mounted volume from localstack (/tmp/localstack) with Google Storage
 -- put the 3 images in Google Storage and test
+
+# TODO:
+change worker.py code (and all python files using localstack API)
+- test on local
+-- so remove localstack
+-- and test with all containers up
+- then update code in gcp docker images

@@ -51,7 +51,8 @@ gcloud init
 gcloud services enable containerregistry.googleapis.com
 gcloud auth login
 gcloud auth configure-docker
-
+# service key is stored at this location:
+/Users/pierre.krzisch/dev/perso/google_cloud/tcc-lucas-pierre-7490c66905ca.json
 
 If you wanna see the all running nodes you can type:
 kubectl get nodes -A
@@ -284,3 +285,5 @@ async wait for the result of the task previously sent to Celery
 # QUESTION
 why do we do this?
 awslocal s3 sync /tmp/localstack/dataset s3://fashion-datasets/dataset-v1
+# ANSWER
+to import local images to our new bucket dataset-v1
