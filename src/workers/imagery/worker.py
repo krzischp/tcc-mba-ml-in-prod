@@ -26,23 +26,33 @@ imagery = Celery(
 )
 psql = PostgreDB()
 
-# UPDATE
-def rename_blob(bucket_name, blob_name, new_name):
-    """Renames a blob."""
-    # The ID of your GCS bucket
+def copy_blob(
+    bucket_name, blob_name, destination_bucket_name, destination_blob_name
+):
+    """Copies a blob from one bucket to another with a new name."""
     # bucket_name = "your-bucket-name"
-    # The ID of the GCS object to rename
     # blob_name = "your-object-name"
-    # The new ID of the GCS object
-    # new_name = "new-object-name"
+    # destination_bucket_name = "destination-bucket-name"
+    # destination_blob_name = "destination-object-name"
 
     storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(blob_name)
 
-    new_blob = bucket.rename_blob(blob, new_name)
+    source_bucket = storage_client.bucket(bucket_name)
+    source_blob = source_bucket.blob(blob_name)
+    destination_bucket = storage_client.bucket(destination_bucket_name)
 
-    print(f"Blob {blob.name} has been renamed to {new_blob.name}")
+    blob_copy = source_bucket.copy_blob(
+        source_blob, destination_bucket, destination_blob_name
+    )
+
+    print(
+        "Blob {} in bucket {} copied to blob {} in bucket {}.".format(
+            source_blob.name,
+            source_bucket.name,
+            blob_copy.name,
+            destination_bucket.name,
+        )
+    )
 
 
 def upload_blob_from_memory(bucket_name, contents, destination_blob_name):
@@ -88,7 +98,7 @@ def upload(result: List[dict], s3_target: str):
         logger.info(f"Uploading {image_id}.jpg")
         blob_name = f"fashion-datasets/dataset-v1/{image_id}.jpg"
         new_name = f"{s3_target}/images/{image_id}.jpg"
-        rename_blob(bucket_name, blob_name, new_name)
+        copy_blob(bucket_name, blob_name, bucket_name, new_name)
 
 
 def run_augmentations(aug_conf: dict, result: List[dict], s3_obj, s3_target: str):
@@ -145,4 +155,4 @@ def filter_task(self, **kwargs) -> Dict[str, Any]:
         return {"s3_target": s3_target}
     except Exception as e:
         # TO DEBUG Celery queue event
-        return {"s3_target": e}
+        return {"error": e, "result": result}
