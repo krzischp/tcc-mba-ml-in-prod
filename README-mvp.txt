@@ -23,9 +23,9 @@ gcloud container clusters delete --region=us-east1 tcc-cluster
 ##################### Cluster creation in Google Cloud Editor
 # first drag and drop the files in kubectl-files from your local to Google Cloud editor's file system
 # then execute the following command line in Google Cloud editor:
-kubectl apply -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,database-service.yaml,imagery-worker-deployment.yaml,inference-worker-deployment.yaml,localstack-claim0-persistentvolumeclaim.yaml,localstack-deployment.yaml,localstack-service.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
+kubectl apply -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,database-service.yaml,imagery-worker-deployment.yaml,inference-worker-deployment.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
 # if you need to delete created resources:
-kubectl delete -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,database-service.yaml,imagery-worker-deployment.yaml,inference-worker-deployment.yaml,localstack-claim0-persistentvolumeclaim.yaml,localstack-deployment.yaml,localstack-service.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
+kubectl delete -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,database-service.yaml,imagery-worker-deployment.yaml,inference-worker-deployment.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
 
 ##################### util command lines
 # push to Google Container Registry
@@ -65,7 +65,7 @@ kubectl get service my-cip-service --output yaml
 kubectl get pod -n default
 
 kubectl describe pod -n default client-7d6bc5485f-vlrhq
-kubectl logs client-c4684466b-qq286
+kubectl logs client-5f594f7c94-jppvs
 
 kubectl delete -f tcc-mba-ml-in-prod/client-deployment.yaml
 kubectl apply -f tcc-mba-ml-in-prod/client-deployment.yaml

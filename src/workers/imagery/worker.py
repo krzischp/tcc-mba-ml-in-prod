@@ -9,7 +9,6 @@ import albumentations as A
 import cv2
 import json
 import numpy as np
-import s3fs
 from PIL import Image
 from celery import Celery
 from celery.utils.log import get_logger
@@ -55,7 +54,7 @@ def copy_blob(
     )
 
 
-def upload_blob_from_memory(bucket_name, contents, destination_blob_name):
+def upload_blob_from_memory(bucket_name, contents, destination_blob_name, content_type="text/plain"):
     """Uploads a file to the bucket."""
 
     # The ID of your GCS bucket
@@ -71,7 +70,7 @@ def upload_blob_from_memory(bucket_name, contents, destination_blob_name):
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
 
-    blob.upload_from_string(contents, content_type="application/json")
+    blob.upload_from_string(contents, content_type=content_type)
 
     print(
         f"{destination_blob_name} with contents {contents} uploaded to {bucket_name}."
@@ -91,7 +90,7 @@ def upload(result: List[dict], s3_target: str):
     # NOTE: example location to store the images
     bucket_name = "tcc-clothes"
     destination_blob_name = f"{s3_target}/metadata.json"
-    upload_blob_from_memory(bucket_name, json.dumps(result), destination_blob_name)
+    upload_blob_from_memory(bucket_name, json.dumps(result), destination_blob_name, content_type="application/json")
 
     for res in result:
         image_id = res["image_id"]
@@ -101,7 +100,23 @@ def upload(result: List[dict], s3_target: str):
         copy_blob(bucket_name, blob_name, bucket_name, new_name)
 
 
-def run_augmentations(aug_conf: dict, result: List[dict], s3_obj, s3_target: str):
+from io import BytesIO
+from PIL import Image
+
+
+def download_blob_into_memory(bucket_name, blob_name):
+    """Downloads a blob into memory."""
+    storage_client = storage.Client()
+
+    bucket = storage_client.bucket(bucket_name)
+
+    blob = bucket.blob(blob_name)
+    contents = blob.download_as_bytes()
+
+    return contents
+
+
+def run_augmentations(aug_conf: dict, result: List[dict], s3_target: str):
     """
     Apply augmentation to images from current run.
 
@@ -121,8 +136,10 @@ def run_augmentations(aug_conf: dict, result: List[dict], s3_obj, s3_target: str
         logger.info(f"max_height: {max_height}")
         logger.info(f"Width after resize: {width_resized}")
         logger.info(f"Height after resize: {height_resized}")
-        with s3_obj.open(f"{s3_target}/images/{image_id}.jpg") as original_img:
-            image = np.array(Image.open(original_img))
+        bucket_name = "tcc-clothes"
+        
+        img = download_blob_into_memory(bucket_name, f"{s3_target}/images/{image_id}.jpg")
+        image = np.asarray(Image.open(BytesIO(img)))
 
         transform = A.Compose(
             [A.RandomSizedCrop(min_max_height=(min_height, max_height),
@@ -132,8 +149,8 @@ def run_augmentations(aug_conf: dict, result: List[dict], s3_obj, s3_target: str
         random.seed(42)
         _, augmented_image = cv2.imencode('.jpg', transform(image=image)['image'])
 
-        with s3_obj.open(f"{s3_target}/augmentation/{image_id}.jpg", "wb") as aug_f:
-            aug_f.write(augmented_image.tostring())
+        destination_blob_name = f"{s3_target}/augmentation/{image_id}.jpg"
+        upload_blob_from_memory(bucket_name, augmented_image.tobytes(), destination_blob_name, content_type="text/plain")
 
 
 @imagery.task(bind=True, name="filter")
@@ -147,12 +164,8 @@ def filter_task(self, **kwargs) -> Dict[str, Any]:
     aug_conf = kwargs.get("aug_config")
     s3_target = f"{BUCKET_NAME}/{self.request.id}"
     result = psql.filter_products(query=query)
-    try:
-        upload(result=result, s3_target=s3_target)
-        if aug_conf:
-            logger.info("Starting augmentation")
-            run_augmentations(aug_conf=aug_conf, s3_target=s3_target, s3_obj=s3_obj, result=result)
-        return {"s3_target": s3_target}
-    except Exception as e:
-        # TO DEBUG Celery queue event
-        return {"error": e, "result": result}
+    upload(result=result, s3_target=s3_target)
+    if aug_conf:
+        logger.info("Starting augmentation")
+        run_augmentations(aug_conf=aug_conf, s3_target=s3_target, result=result)
+    return {"s3_target": s3_target}

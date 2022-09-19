@@ -2,13 +2,13 @@
 """Celery Worker that implements VGG16"""
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-import s3fs
 import torch
 from celery import Celery
 from celery.utils.log import get_logger
 from torch.utils.data import DataLoader
+from google.cloud import storage
 
 from deepfashion import FashionNetVgg16NoBn
 from utils.dataset import ImagesDataset
@@ -19,20 +19,70 @@ inference = Celery(
 )
 
 
-def upload(result: List[dict], s3_obj, s3_target: str):
-    """
-    Uploads predictions to S3.
+def list_blobs_with_prefix(bucket_name, prefix, images_filepaths, delimiter=None):
+    """Lists all the blobs in the bucket that begin with the prefix.
 
-    :param result: list of dict resulted from inference
-    :param s3_obj: s3fs object
-    :param s3_target: s3 path for specific run
-    :return: None
-    """
-    logger.info("Uploading metadata and images")
+    This can be used to list all blobs in a "folder", e.g. "public/".
 
-    # NOTE: example location to store the images
-    with s3_obj.open(f"{s3_target}/predictions.json", "w") as meta_f:
-        json.dump(result, meta_f)
+    The delimiter argument can be used to restrict the results to only the
+    "files" in the given "folder". Without the delimiter, the entire tree under
+    the prefix is returned. For example, given these blobs:
+
+        a/1.txt
+        a/b/2.txt
+
+    If you specify prefix ='a/', without a delimiter, you'll get back:
+
+        a/1.txt
+        a/b/2.txt
+
+    However, if you specify prefix='a/' and delimiter='/', you'll get back
+    only the file directly under 'a/':
+
+        a/1.txt
+
+    As part of the response, you'll also get back a blobs.prefixes entity
+    that lists the "subfolders" under `a/`:
+
+        a/b/
+    """
+
+    storage_client = storage.Client()
+
+    # Note: Client.list_blobs requires at least package version 1.17.0.
+    blobs = storage_client.list_blobs(bucket_name, prefix=prefix, delimiter=delimiter)
+
+    # Note: The call returns a response only when the iterator is consumed.
+    print("Blobs:")
+    for blob in blobs:
+        # print(blob.name)
+        images_filepaths.append(blob.name)
+    return images_filepaths
+
+
+# TODO:
+# put this function (also in imagery/worker.py) in a unique utils file
+def upload_blob_from_memory(bucket_name, contents, destination_blob_name, content_type="text/plain"):
+    """Uploads a file to the bucket."""
+
+    # The ID of your GCS bucket
+    # bucket_name = "your-bucket-name"
+
+    # The contents to upload to the file
+    # contents = "these are my contents"
+
+    # The ID of your GCS object
+    # destination_blob_name = "storage-object-name"
+
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    blob.upload_from_string(contents, content_type=content_type)
+
+    print(
+        f"{destination_blob_name} with contents {contents} uploaded to {bucket_name}."
+    )
 
 
 @inference.task(name="model")
@@ -44,7 +94,6 @@ def inference_task(**kwargs) -> Dict[str, Any]:
     s3_target = kwargs.get("s3_target")
     logger.info(f"Start executing prediction task - s3 target: {s3_target}")
 
-    s3_obj = s3fs.S3FileSystem(client_kwargs={"endpoint_url": f'http://{os.getenv("S3_HOST")}:4566'})
     fn = FashionNetVgg16NoBn()
 
     # pose network needs to be trained from scratch? i guess?
@@ -59,21 +108,24 @@ def inference_task(**kwargs) -> Dict[str, Any]:
             logger.info(f"filling xavier {k}")
 
     images_filepaths = []
-    for file in s3_obj.ls(f"{s3_target}/images"):
-        images_filepaths.append(file)
+    bucket_name = "tcc-clothes"
+    prefix = f"{s3_target}/images"
+    images_filepaths = list_blobs_with_prefix(bucket_name, prefix, images_filepaths)
 
-    for file in s3_obj.ls(f"{s3_target}/augmented"):
-        images_filepaths.append(file)
+    prefix = f"{s3_target}/augmented"
+    images_filepaths = list_blobs_with_prefix(bucket_name, prefix, images_filepaths)
 
-    images_dataset = ImagesDataset(images_filepaths=images_filepaths, s3_obj=s3_obj)
+    images_dataset = ImagesDataset(images_filepaths=images_filepaths)
     loader = DataLoader(images_dataset)
     predicted_labels = []
     with torch.no_grad():
         for image, image_name in loader:
             output = fn(image)
             predicted_labels.append({"image_name": image_name,
-                                     "massive_attr": output[0].tolist(),
-                                     "categories": output[1].tolist()})
-    upload(result=predicted_labels, s3_target=s3_target, s3_obj=s3_obj)
-
+                                    "massive_attr": output[0].tolist(),
+                                    "categories": output[1].tolist()})
+    bucket_name = "tcc-clothes"
+    destination_blob_name = f"{s3_target}/predictions.json"
+    logger.info("Uploading metadata and images")
+    upload_blob_from_memory(bucket_name, json.dumps(predicted_labels), destination_blob_name, content_type="application/json")
     return {"s3_target": s3_target}
