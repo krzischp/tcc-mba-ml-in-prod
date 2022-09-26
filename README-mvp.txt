@@ -81,18 +81,7 @@ curl CLUSTER_IP:80
 # when exposing a pod with a LoadBalancer, use this command line to view the external IP and exposed PORT
 # obs: you cannot access it if it is in a specific network
 # worst case: we could try with no network policy at all, and look at this later
-kubectl get services
+kubectl get services | grep client
 NAME           TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)             AGE
 client-mcskw   LoadBalancer   10.83.128.109   34.139.26.116   80:30905/TCP        5m37s
 We can then access 34.139.26.116:80 in this case.
-
-# TODO:
-- change mounted volume from localstack (/tmp/localstack) with Google Storage
--- put the 3 images in Google Storage and test
-
-# TODO:
-change worker.py code (and all python files using localstack API)
-- test on local
--- so remove localstack
--- and test with all containers up
-- then update code in gcp docker images

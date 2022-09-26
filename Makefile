@@ -4,9 +4,6 @@ export TEMP_FOLDER = ./tmp
 export DATASET_PATH = ~/dev/perso/mba_ml_in_prod/tcc/tcc-data/fashion-dataset
 
 build:
-	pip install -r requirements.txt
-	# prepare data for the database (filter out corrupted records and fix the format)
-	# python scripts/prepare_data.py -d ${DATASET_PATH} -o $(TEMP_FOLDER)/database/data.csv
 	docker-compose build
 
 up:
