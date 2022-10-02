@@ -77,7 +77,6 @@ services:
     depends_on:
       - imagery_worker
       - inference_worker
-      - localstack
     ports:
       - 5000:5000
     networks:
