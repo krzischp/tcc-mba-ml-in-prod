@@ -1,3 +1,5 @@
+# pylint: disable=too-few-public-methods,import-error,no-name-in-module
+"""Entrypoint for classifier API"""
 import os
 from typing import Optional, Any
 
@@ -11,6 +13,7 @@ tasks = Celery(broker=os.getenv("BROKER_URL"), backend=os.getenv("REDIS_URL"))
 
 
 class FilterProductsModel(BaseModel):
+    """Defines attributes for filter products model"""
     gender: str
     master_category: Optional[str]
     sub_category: Optional[str]
@@ -25,6 +28,7 @@ class FilterProductsModel(BaseModel):
 
 
 class TaskResult(BaseModel):
+    """Defines attributes for task result model"""
     id: str
     status: str
     error: Optional[str] = None
@@ -32,6 +36,7 @@ class TaskResult(BaseModel):
 
 
 class InferenceModel(BaseModel):
+    """Defines attributes for inference model"""
     s3_target: str
 
 

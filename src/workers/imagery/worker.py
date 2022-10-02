@@ -3,15 +3,13 @@ import json
 import os
 import random
 from typing import Any, Dict, List
-from google.cloud import storage
 
 import albumentations as A
 import cv2
-import json
 import numpy as np
-from PIL import Image
 from celery import Celery
 from celery.utils.log import get_logger
+from google.cloud import storage
 
 from app.database import PostgreDB
 
