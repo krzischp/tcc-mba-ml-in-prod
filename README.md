@@ -64,7 +64,7 @@ docker-compose build --pull
 docker-compose push
 ```
 
-Then you can add files from `kubectl-files` folder to your GCP editor file system, and execute them with this command line:
+Then you can add files from `k8s` folder to your GCP editor file system, and execute them with this command line:
 ```sh
 kubectl apply -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,database-service.yaml,imagery-worker-deployment.yaml,inference-worker-deployment.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
 ```
