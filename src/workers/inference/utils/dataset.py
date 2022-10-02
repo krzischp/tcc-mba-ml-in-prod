@@ -24,11 +24,7 @@ def download_blob_into_memory(bucket_name, blob_name):
 
 
 class ImagesDataset(Dataset):
-    def __init__(
-            self,
-            images_filepaths: List[str],
-            device: str = "cpu"
-    ):
+    def __init__(self, images_filepaths: List[str], device: str = "cpu"):
         self._images_filepaths = images_filepaths
         self._transform = A.Compose([A.Resize(224, 224), ToTensorV2()])
         self._device = device

@@ -43,7 +43,9 @@ async def upload_images(data: FilterProductsModel):
     :param data: request input
     :returns: celery task id
     """
-    aug_config = data.augmentation_config["albumentation"] if data.augmentation_config else None
+    aug_config = (
+        data.augmentation_config["albumentation"] if data.augmentation_config else None
+    )
     query = f"""SELECT image_id,
                        gender,
                        master_category,
@@ -60,9 +62,11 @@ async def upload_images(data: FilterProductsModel):
                       year = '{data.start_year}'
                 LIMIT {data.limit}
             """
-    task = tasks.send_task(name="filter",
-                           kwargs={"query": query, "aug_config": aug_config},
-                           queue="imagery")
+    task = tasks.send_task(
+        name="filter",
+        kwargs={"query": query, "aug_config": aug_config},
+        queue="imagery",
+    )
 
     return JSONResponse({"task_id": task.id})
 
@@ -74,9 +78,9 @@ async def predict_images(data: InferenceModel):
 
     :param data: request input
     """
-    task = tasks.send_task(name="model",
-                           kwargs={"s3_target": data.s3_target},
-                           queue="inference")
+    task = tasks.send_task(
+        name="model", kwargs={"s3_target": data.s3_target}, queue="inference"
+    )
 
     return JSONResponse({"task_id": task.id})
 

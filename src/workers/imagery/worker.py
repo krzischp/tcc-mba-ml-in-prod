@@ -25,9 +25,8 @@ imagery = Celery(
 )
 psql = PostgreDB()
 
-def copy_blob(
-    bucket_name, blob_name, destination_bucket_name, destination_blob_name
-):
+
+def copy_blob(bucket_name, blob_name, destination_bucket_name, destination_blob_name):
     """Copies a blob from one bucket to another with a new name."""
     # bucket_name = "your-bucket-name"
     # blob_name = "your-object-name"
@@ -54,7 +53,9 @@ def copy_blob(
     )
 
 
-def upload_blob_from_memory(bucket_name, contents, destination_blob_name, content_type="text/plain"):
+def upload_blob_from_memory(
+    bucket_name, contents, destination_blob_name, content_type="text/plain"
+):
     """Uploads a file to the bucket."""
 
     # The ID of your GCS bucket
@@ -76,6 +77,7 @@ def upload_blob_from_memory(bucket_name, contents, destination_blob_name, conten
         f"{destination_blob_name} with contents {contents} uploaded to {bucket_name}."
     )
 
+
 def upload(result: List[dict], s3_target: str):
     """
     Uploads metadata and images for every run in s3.\
@@ -90,7 +92,12 @@ def upload(result: List[dict], s3_target: str):
     # NOTE: example location to store the images
     bucket_name = "tcc-clothes"
     destination_blob_name = f"{s3_target}/metadata.json"
-    upload_blob_from_memory(bucket_name, json.dumps(result), destination_blob_name, content_type="application/json")
+    upload_blob_from_memory(
+        bucket_name,
+        json.dumps(result),
+        destination_blob_name,
+        content_type="application/json",
+    )
 
     for res in result:
         image_id = res["image_id"]
@@ -137,20 +144,31 @@ def run_augmentations(aug_conf: dict, result: List[dict], s3_target: str):
         logger.info(f"Width after resize: {width_resized}")
         logger.info(f"Height after resize: {height_resized}")
         bucket_name = "tcc-clothes"
-        
-        img = download_blob_into_memory(bucket_name, f"{s3_target}/images/{image_id}.jpg")
+
+        img = download_blob_into_memory(
+            bucket_name, f"{s3_target}/images/{image_id}.jpg"
+        )
         image = np.asarray(Image.open(BytesIO(img)))
 
         transform = A.Compose(
-            [A.RandomSizedCrop(min_max_height=(min_height, max_height),
-                               height=height_resized,
-                               width=width_resized)]
+            [
+                A.RandomSizedCrop(
+                    min_max_height=(min_height, max_height),
+                    height=height_resized,
+                    width=width_resized,
+                )
+            ]
         )
         random.seed(42)
-        _, augmented_image = cv2.imencode('.jpg', transform(image=image)['image'])
+        _, augmented_image = cv2.imencode(".jpg", transform(image=image)["image"])
 
         destination_blob_name = f"{s3_target}/augmentation/{image_id}.jpg"
-        upload_blob_from_memory(bucket_name, augmented_image.tobytes(), destination_blob_name, content_type="text/plain")
+        upload_blob_from_memory(
+            bucket_name,
+            augmented_image.tobytes(),
+            destination_blob_name,
+            content_type="text/plain",
+        )
 
 
 @imagery.task(bind=True, name="filter")

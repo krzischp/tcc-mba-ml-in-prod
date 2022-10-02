@@ -62,7 +62,9 @@ def list_blobs_with_prefix(bucket_name, prefix, images_filepaths, delimiter=None
 
 # TODO:
 # put this function (also in imagery/worker.py) in a unique utils file
-def upload_blob_from_memory(bucket_name, contents, destination_blob_name, content_type="text/plain"):
+def upload_blob_from_memory(
+    bucket_name, contents, destination_blob_name, content_type="text/plain"
+):
     """Uploads a file to the bucket."""
 
     # The ID of your GCS bucket
@@ -98,12 +100,12 @@ def inference_task(**kwargs) -> Dict[str, Any]:
 
     # pose network needs to be trained from scratch? i guess?
     for k in fn.state_dict().keys():
-        if 'conv5_pose' in k and 'weight' in k:
+        if "conv5_pose" in k and "weight" in k:
             torch.nn.init.xavier_normal_(fn.state_dict()[k])
             logger.info(f"filling xavier {k}")
 
     for k in fn.state_dict().keys():
-        if 'conv5_global' in k and 'weight' in k:
+        if "conv5_global" in k and "weight" in k:
             torch.nn.init.xavier_normal_(fn.state_dict()[k])
             logger.info(f"filling xavier {k}")
 
@@ -121,11 +123,20 @@ def inference_task(**kwargs) -> Dict[str, Any]:
     with torch.no_grad():
         for image, image_name in loader:
             output = fn(image)
-            predicted_labels.append({"image_name": image_name,
-                                    "massive_attr": output[0].tolist(),
-                                    "categories": output[1].tolist()})
+            predicted_labels.append(
+                {
+                    "image_name": image_name,
+                    "massive_attr": output[0].tolist(),
+                    "categories": output[1].tolist(),
+                }
+            )
     bucket_name = "tcc-clothes"
     destination_blob_name = f"{s3_target}/predictions.json"
     logger.info("Uploading metadata and images")
-    upload_blob_from_memory(bucket_name, json.dumps(predicted_labels), destination_blob_name, content_type="application/json")
+    upload_blob_from_memory(
+        bucket_name,
+        json.dumps(predicted_labels),
+        destination_blob_name,
+        content_type="application/json",
+    )
     return {"s3_target": s3_target}

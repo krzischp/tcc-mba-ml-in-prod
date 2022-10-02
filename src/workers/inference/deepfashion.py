@@ -26,8 +26,8 @@ def gated_roi_pooling(input, rois, gates=None, size=ROI_POOL_SIZE, spatial_scale
     :param spatial_scale:
     :return:
     """
-    assert (rois.dim() == 2)
-    assert (rois.size(1) == 5)
+    assert rois.dim() == 2
+    assert rois.size(1) == 5
     output = []
     rois = rois.data.float()
     num_rois = rois.size(0)
@@ -37,7 +37,9 @@ def gated_roi_pooling(input, rois, gates=None, size=ROI_POOL_SIZE, spatial_scale
     for i in range(num_rois):
         roi = rois[i]
         im_idx = roi[0]
-        im = input.narrow(0, im_idx, 1)[..., roi[2]:(roi[4] + 1), roi[1]:(roi[3] + 1)]
+        im = input.narrow(0, im_idx, 1)[
+            ..., roi[2] : (roi[4] + 1), roi[1] : (roi[3] + 1)
+        ]
         mp = adaptive_max_pool(im, size)[0]
         output.append(mp)
 
@@ -62,7 +64,9 @@ def landmark_predictions_to_roipool_boxes(landmark_loc, bbs=0):
     :return:
     """
     collect = []
-    for batch_ix, landmark_position in enumerate(landmark_loc.reshape(-1, 2).unsqueeze(0)):
+    for batch_ix, landmark_position in enumerate(
+        landmark_loc.reshape(-1, 2).unsqueeze(0)
+    ):
         for landmark_pair in landmark_position:
             x, y = landmark_pair
             x, y = int(x / 16), int(y / 16)
@@ -85,14 +89,16 @@ class FashionNetVgg16NoBn(nn.Module):
 
         features = list(vgg.features.children())
         self.conv4 = nn.Sequential(
-            *features[:-8])  # the paper implements DF with features taken from conv4 from vgg16
+            *features[:-8]
+        )  # the paper implements DF with features taken from conv4 from vgg16
         self.conv5_pose = nn.Sequential(*features[-8:])
         self.conv5_global = nn.Sequential(*features[-8:])
 
         self.fc6_global = nn.Linear(in_features=512 * 7 * 7, out_features=1024 * 4)
         self.fc6_local = nn.Linear(
             in_features=512 * N_LANDMARKS * ROI_POOL_SIZE[0] * ROI_POOL_SIZE[1],
-            out_features=1024)
+            out_features=1024,
+        )
         self.fc6_pose = nn.Linear(in_features=512 * 7 * 7, out_features=1024)
         self.fc7_pose = nn.Linear(in_features=1024, out_features=1024)
         self.loc = nn.Linear(in_features=1024, out_features=16)
@@ -120,7 +126,9 @@ class FashionNetVgg16NoBn(nn.Module):
         pools = gated_roi_pooling(base_features, roi_boxes, pose_vis < -1000)
 
         fc6_local = F.leaky_relu(self.fc6_local(self.flatten(pools)))
-        fc6_global = F.leaky_relu(self.fc6_global(self.flatten(self.conv5_global(base_features))))
+        fc6_global = F.leaky_relu(
+            self.fc6_global(self.flatten(self.conv5_global(base_features)))
+        )
 
         global_and_local = torch.cat([fc6_local, fc6_global], dim=1)
 
