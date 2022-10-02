@@ -7,8 +7,8 @@ from typing import Any, Dict
 import torch
 from celery import Celery
 from celery.utils.log import get_logger
-from torch.utils.data import DataLoader
 from google.cloud import storage
+from torch.utils.data import DataLoader
 
 from deepfashion import FashionNetVgg16NoBn
 from utils.dataset import ImagesDataset

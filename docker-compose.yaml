@@ -33,11 +33,9 @@ services:
     links:
       - backend:backend
       - broker:broker
-      - database:database
     depends_on:
       - broker
       - backend
-      - database
     networks:
       - network
     command: celery worker -A worker.imagery -P threads --loglevel=INFO --queues=imagery
@@ -99,37 +97,10 @@ services:
       - backend:backend
       - broker:broker
       - api:api
-      - localstack:localstack
     depends_on:
-      - localstack
       - api
     networks:
       - network
-
-  database:
-    image: gcr.io/tcc-lucas-pierre/database
-    build: ./src/database
-    env_file:
-      - 'variables.env'
-    volumes:
-      - ${TEMP_FOLDER}/database:/tmp/database
-    networks:
-      - network
-    ports:
-    - 5432:5432
-
-  localstack:
-    image: localstack/localstack:0.12.13
-    environment:
-      SERVICES: s3
-      DATA_DIR: /tmp/localstack/data
-    volumes:
-      - '${DATASET_PATH}/images:/tmp/localstack/dataset'
-      - './src/localstack:/docker-entrypoint-initaws.d'
-    networks:
-      - network
-    ports:
-    - 4566:4566
 
 networks:
     network: {}
