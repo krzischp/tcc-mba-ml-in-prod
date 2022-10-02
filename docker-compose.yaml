@@ -1,44 +1,18 @@
 version: '3.8'
 
 services:
-  broker:
-    container_name: celery-broker
-    image: rabbitmq:3.8.18-management-alpine
-    ports:
-      - 8080:15672
-      - 5672:5672
-    networks:
-      - network
-
-  backend:
-    container_name: celery-backend
-    image: redis:6.2.4
-    ports:
-      - 6379:6379
-    networks:
-      - network
-    command: redis-server --requirepass password
-
   imagery_worker:
     image: gcr.io/tcc-lucas-pierre/imagery_worker
     build: ./src/workers/imagery
     container_name: celery-imagery
     env_file:
       - 'variables.env'
-    volumes:
-      - '${DATASET_PATH}/images:/workers/data'
     environment:
       - BUCKET_NAME=fashion-tasks
       - DATA_FOLDER=data
-    links:
-      - backend:backend
-      - broker:broker
-    depends_on:
-      - broker
-      - backend
     networks:
       - network
-    command: celery worker -A worker.imagery -P threads --loglevel=INFO --queues=imagery
+    command: tail -f /dev/null
 
   inference_worker:
     image: gcr.io/tcc-lucas-pierre/inference_worker
@@ -48,22 +22,15 @@ services:
     container_name: celery-inference
     env_file:
       - 'variables.env'
-    volumes:
-      - '${DATASET_PATH}/images:/workers/data'
     environment:
       - BUCKET_NAME=fashion-tasks
       - DATA_FOLDER=data
       - INFERENCE_DEVICE=cpu
       - BATCH_SIZE=10
       - NUM_WORKERS=2
-    links:
-      - backend:backend
-      - broker:broker
     networks:
       - network
-    depends_on:
-      - imagery_worker
-    command: celery worker -A worker.inference -P threads --loglevel=INFO --queues=inference
+    command: tail -f /dev/null
 
   api:
     image: gcr.io/tcc-lucas-pierre/api
@@ -71,9 +38,6 @@ services:
     container_name: fashion-api
     env_file:
       - 'variables.env'
-    links:
-      - backend:backend
-      - broker:broker
     depends_on:
       - imagery_worker
       - inference_worker
@@ -93,8 +57,6 @@ services:
     env_file:
       - 'variables.env'
     links:
-      - backend:backend
-      - broker:broker
       - api:api
     depends_on:
       - api

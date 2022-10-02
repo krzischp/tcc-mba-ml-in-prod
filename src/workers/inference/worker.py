@@ -1,22 +1,14 @@
 # pylint: disable-all
 """Celery Worker that implements VGG16"""
 import json
-import os
 from typing import Any, Dict
 
 import torch
-from celery import Celery
-from celery.utils.log import get_logger
 from google.cloud import storage
 from torch.utils.data import DataLoader
 
 from deepfashion import FashionNetVgg16NoBn
 from utils.dataset import ImagesDataset
-
-logger = get_logger(__name__)
-inference = Celery(
-    "inference", broker=os.getenv("BROKER_URL"), backend=os.getenv("REDIS_URL")
-)
 
 
 def list_blobs_with_prefix(bucket_name, prefix, images_filepaths, delimiter=None):
@@ -87,27 +79,22 @@ def upload_blob_from_memory(
     )
 
 
-@inference.task(name="model")
 def inference_task(**kwargs) -> Dict[str, Any]:
     """
     Run inference on image created on Step1 and Step2 using this FashionNetVgg16NoBn implementation
     from https://github.com/i008/pytorch-deepfashion.git
     """
     s3_target = kwargs.get("s3_target")
-    logger.info(f"Start executing prediction task - s3 target: {s3_target}")
-
     fn = FashionNetVgg16NoBn()
 
     # pose network needs to be trained from scratch? i guess?
     for k in fn.state_dict().keys():
         if "conv5_pose" in k and "weight" in k:
             torch.nn.init.xavier_normal_(fn.state_dict()[k])
-            logger.info(f"filling xavier {k}")
 
     for k in fn.state_dict().keys():
         if "conv5_global" in k and "weight" in k:
             torch.nn.init.xavier_normal_(fn.state_dict()[k])
-            logger.info(f"filling xavier {k}")
 
     images_filepaths = []
     bucket_name = "tcc-clothes"
@@ -132,7 +119,6 @@ def inference_task(**kwargs) -> Dict[str, Any]:
             )
     bucket_name = "tcc-clothes"
     destination_blob_name = f"{s3_target}/predictions.json"
-    logger.info("Uploading metadata and images")
     upload_blob_from_memory(
         bucket_name,
         json.dumps(predicted_labels),

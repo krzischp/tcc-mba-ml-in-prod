@@ -7,21 +7,11 @@ from typing import Any, Dict, List
 import albumentations as A
 import cv2
 import numpy as np
-from celery import Celery
-from celery.utils.log import get_logger
 from google.cloud import storage
-
-from app.database import PostgreDB
 
 BUCKET_NAME = os.getenv("BUCKET_NAME", "")
 DATA_FOLDER = os.getenv("DATA_FOLDER", "")
 S3_HOST = os.getenv("S3_HOST", "")
-
-logger = get_logger(__name__)
-imagery = Celery(
-    "imagery", broker=os.getenv("BROKER_URL"), backend=os.getenv("REDIS_URL")
-)
-psql = PostgreDB()
 
 
 def copy_blob(bucket_name, blob_name, destination_bucket_name, destination_blob_name):
@@ -85,8 +75,6 @@ def upload(result: List[dict], s3_target: str):
     :param s3_target: s3 path for specific run
     :return: None
     """
-    logger.info("Uploading metadata and images")
-
     # NOTE: example location to store the images
     bucket_name = "tcc-clothes"
     destination_blob_name = f"{s3_target}/metadata.json"
@@ -99,7 +87,6 @@ def upload(result: List[dict], s3_target: str):
 
     for res in result:
         image_id = res["image_id"]
-        logger.info(f"Uploading {image_id}.jpg")
         blob_name = f"fashion-datasets/dataset-v1/{image_id}.jpg"
         new_name = f"{s3_target}/images/{image_id}.jpg"
         copy_blob(bucket_name, blob_name, bucket_name, new_name)
@@ -136,11 +123,6 @@ def run_augmentations(aug_conf: dict, result: List[dict], s3_target: str):
         max_height = aug_conf["cropping"]["height"]["max"]
         width_resized = aug_conf["resize"]["width"]
         height_resized = aug_conf["resize"]["height"]
-        logger.info(f"Applying augmentation: {image_id}.jpg")
-        logger.info(f"min_height: {min_height}")
-        logger.info(f"max_height: {max_height}")
-        logger.info(f"Width after resize: {width_resized}")
-        logger.info(f"Height after resize: {height_resized}")
         bucket_name = "tcc-clothes"
 
         img = download_blob_into_memory(
@@ -169,7 +151,6 @@ def run_augmentations(aug_conf: dict, result: List[dict], s3_target: str):
         )
 
 
-@imagery.task(bind=True, name="filter")
 def filter_task(self, **kwargs) -> Dict[str, Any]:
     """
     Defines the celery task to query SQL database and filter products.
@@ -179,9 +160,4 @@ def filter_task(self, **kwargs) -> Dict[str, Any]:
     query = kwargs.get("query")
     aug_conf = kwargs.get("aug_config")
     s3_target = f"{BUCKET_NAME}/{self.request.id}"
-    result = psql.filter_products(query=query)
-    upload(result=result, s3_target=s3_target)
-    if aug_conf:
-        logger.info("Starting augmentation")
-        run_augmentations(aug_conf=aug_conf, s3_target=s3_target, result=result)
     return {"s3_target": s3_target}
