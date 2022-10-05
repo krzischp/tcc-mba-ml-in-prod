@@ -7,7 +7,6 @@ import os
 
 import torch
 from flask import Flask, request, jsonify
-from google.cloud import bigquery
 from google.cloud import storage
 
 from deepfashion import FashionNetVgg16NoBn
@@ -16,8 +15,6 @@ BUCKET_NAME = os.getenv("BUCKET_NAME")
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-client = bigquery.Client()
 
 
 def list_blobs_with_prefix(bucket_name, prefix, images_filepaths, delimiter=None):
@@ -67,6 +64,12 @@ def inference_task():
     """Log the request payload."""
     payload = request.get_json()
     task_id = payload["task_id"]
+    print(task_id)
+    print(task_id)
+    print(task_id)
+    print(task_id)
+    print(task_id)
+    print(task_id)
 
     fn = FashionNetVgg16NoBn()
 
@@ -82,6 +85,12 @@ def inference_task():
     images_filepaths = []
     prefix = f"fashion-tasks/{task_id}/"
     images_filepaths = list_blobs_with_prefix(BUCKET_NAME, prefix, images_filepaths)
+    print(images_filepaths)
+    print(images_filepaths)
+    print(images_filepaths)
+    print(images_filepaths)
+    print(images_filepaths)
+    print(images_filepaths)
 
     return jsonify({"images": images_filepaths})
 

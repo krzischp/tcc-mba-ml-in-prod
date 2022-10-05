@@ -38,7 +38,6 @@ class FilterProductsModel(BaseModel):
 
 class InferenceModel(BaseModel):
     """Defines attributes for inference model"""
-
     task_id: str
 
 
@@ -84,7 +83,7 @@ async def predict_images(data: InferenceModel):
     response = client.create_task(parent=parent_inference, task=task)
     print(f"Created inference task {response.name}")
 
-    return JSONResponse({"inference_task_id": response.name.split("tasks/")[1]})
+    return JSONResponse({"task_id": response.name.split("tasks/")[1]})
 
 
 @app.get("/task/{task_id}", status_code=200)

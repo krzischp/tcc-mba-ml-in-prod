@@ -20,4 +20,4 @@ ADD utils $APP_DIR/utils
 ADD worker.py $APP_DIR/
 ADD deepfashion.py $APP_DIR/
 
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 main:app
+CMD exec gunicorn --preload --bind :$PORT --workers 1 --threads 8 main:app
