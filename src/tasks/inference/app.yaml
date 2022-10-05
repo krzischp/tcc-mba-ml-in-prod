@@ -1,5 +1,6 @@
-runtime: python37
-service: infer
+runtime: custom
+env: flex
+service: inference
 instance_class: F4
 env_variables:
   BUCKET_NAME: "tcc-clothes"
