@@ -8,6 +8,7 @@ COPY /tcc-lucas-pierre-7490c66905ca.json $APP_DIR/tcc-lucas-pierre-7490c66905ca.
 ENV GOOGLE_APPLICATION_CREDENTIALS=$APP_DIR/tcc-lucas-pierre-7490c66905ca.json
 WORKDIR $APP_DIR
 
+RUN pip install Flask gunicorn
 RUN git clone https://github.com/i008/pytorch-deepfashion.git model
 
 COPY /requirements.txt /tmp/requirements.txt
@@ -19,6 +20,4 @@ ADD utils $APP_DIR/utils
 ADD worker.py $APP_DIR/
 ADD deepfashion.py $APP_DIR/
 
-EXPOSE 6379 5672
-
-ENTRYPOINT python worker.py
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 main:app
