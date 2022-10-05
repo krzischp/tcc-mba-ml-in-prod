@@ -1,6 +1,6 @@
 # pylint: disable=too-few-public-methods,import-error,no-name-in-module
 """Entrypoint for classifier API"""
-from typing import Optional, Any
+from typing import Optional
 
 from fastapi import FastAPI
 from google.cloud import tasks_v2
@@ -34,20 +34,10 @@ class FilterProductsModel(BaseModel):
     augmentation_config: Optional[dict] = None
 
 
-class TaskResult(BaseModel):
-    """Defines attributes for task result model"""
-
-    id: str
-    status: str
-    error: Optional[str] = None
-    result: Optional[Any] = None
-
-
 class InferenceModel(BaseModel):
     """Defines attributes for inference model"""
 
     s3_target: str
-
 
 @app.post("/filter", status_code=201)
 async def upload_images(data: FilterProductsModel):
@@ -87,5 +77,14 @@ def get_task_result(task_id: str):
     """
     Use this endpoint to check the status of a task
     """
-
-    return "Hello"
+    try:
+        request = tasks_v2.GetTaskRequest(
+            name=f"projects/{PROJECT_ID}/locations/{LOCATION}/queues/{QUEUE_IMAGERY}/tasks/{task_id}",
+        )
+        response = client.get_task(request=request)
+        first_attempt = response.first_attempt if response.first_attempt else None
+        status = "FAILED" if first_attempt else "PENDING"
+        return JSONResponse({"status": status})
+    except Exception as ex:
+        print(ex)
+        return JSONResponse({"status": "SUCCESS"})

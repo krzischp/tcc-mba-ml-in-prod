@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import random
+from io import BytesIO
 
 import albumentations as A
 import cv2
@@ -13,7 +14,6 @@ from PIL import Image
 from flask import Flask, request, jsonify
 from google.cloud import bigquery
 from google.cloud import storage
-from io import BytesIO
 
 BUCKET_NAME = os.getenv("BUCKET_NAME")
 app = Flask(__name__)
