@@ -1,0 +1,7 @@
+google-cloud-storage==2.5.0
+opencv-python-headless>=4.5.2.54
+albumentations>=1.0.2
+torch
+torchvision
+Flask
+gunicorn

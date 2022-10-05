@@ -64,7 +64,7 @@ docker-compose build --pull
 docker-compose push
 ```
 
-Then you can add files from `kubectl-files` folder to your GCP editor file system, and execute them with this command line:
+Then you can add files from `k8s` folder to your GCP editor file system, and execute them with this command line:
 ```sh
 kubectl apply -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,database-service.yaml,imagery-worker-deployment.yaml,inference-worker-deployment.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
 ```
@@ -79,5 +79,9 @@ Then you can access <EXTERNAL-IP:PORT> in your browser and you're ready to execu
 
 # Possible improvements
 
-Kubernetes also comes up as a good solution with integration with open-source projects like [Argo Workflows](https://argoproj.github.io/argo-workflows/) and [Kubeflow](https://www.kubeflow.org/). This projects are dedicated to manage deployment of ML workflows with simplicity, portability, parallelism and cost-effectiveness.
+* Kubernetes also comes up as a good solution with integration with open-source projects like [Argo Workflows](https://argoproj.github.io/argo-workflows/) and [Kubeflow](https://www.kubeflow.org/). This projects are dedicated to manage deployment of ML workflows with simplicity, portability, parallelism and cost-effectiveness.
 We didn't integrate these projects here because of the non-inclusion of enough resources in Google Cloud free tier. But when extending to the paying version, this would be a very useful improvement to benefit from **Kubeflow Pipeline** for scheduling and monitoring job/etl executions, as well as for experiment tracking.
+
+* Use GPU resources to reduce inference time
+* Put credentials on Secrets
+* Monitoring/Validating results and model being deprecated in accuracy

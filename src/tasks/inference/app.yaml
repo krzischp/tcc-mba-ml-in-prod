@@ -1,0 +1,5 @@
+runtime: python37
+service: infer
+instance_class: F4
+env_variables:
+  BUCKET_NAME: "tcc-clothes"

@@ -21,7 +21,7 @@ gcloud container clusters delete --region=us-east1 tcc-cluster
 
 
 ##################### Cluster creation in Google Cloud Editor
-# first drag and drop the files in kubectl-files from your local to Google Cloud editor's file system
+# first drag and drop the files in k8s from your local to Google Cloud editor's file system
 # then execute the following command line in Google Cloud editor:
 kubectl apply -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,database-service.yaml,imagery-worker-deployment.yaml,inference-worker-deployment.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
 # if you need to delete created resources:
