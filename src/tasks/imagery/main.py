@@ -4,7 +4,12 @@ from __future__ import annotations
 import json
 import logging
 import os
+import random
 
+import albumentations as A
+import cv2
+import numpy as np
+from PIL import Image
 from flask import Flask, request, jsonify
 from google.cloud import bigquery
 from google.cloud import storage
@@ -63,6 +68,15 @@ def augmentation():
         )
 
     upload(images_to_upload, task_id, metadata)
+    aug_conf = payload.get("augmentation_config")
+    if aug_conf:
+        logger.info("Starting augmentation")
+        logger.info("AUG_CONF: %s", aug_conf)
+        # run_augmentations(
+        #     aug_conf=aug_conf,
+        #     task_id=task_id,
+        #     metadata=metadata,
+        # )
 
     return jsonify({"task_id": task_id})
 
@@ -71,17 +85,13 @@ def copy_blob(blob_name, destination_blob_name):
     """Copies a blob from one bucket to another with a new name."""
     storage_client = storage.Client()
 
-    logger.info("BLOB_NAME: %s", blob_name)
-    logger.info("DESTINATION_BLOB_NAME: %s", destination_blob_name)
-    logger.info("BUCKET_NAME: %s", BUCKET_NAME)
-
     source_bucket = storage_client.get_bucket(BUCKET_NAME)
-    logger.info("SOURCE_BUCKET: %s", source_bucket)
     destination_bucket = storage_client.get_bucket(BUCKET_NAME)
-    logger.info("DESTINATION_BUCKET: %s", destination_bucket)
     source_blob = source_bucket.get_blob(blob_name)
-    logger.info("SOURCE_BLOB: %s", source_blob)
-    blob_copy = source_bucket.copy_blob(source_blob, destination_bucket, destination_blob_name)
+    blob_copy = source_bucket.copy_blob(
+        source_blob, destination_bucket, destination_blob_name
+    )
+    logger.info("BLOB_COPY: $s", blob_copy)
 
     print(
         "Blob {} in bucket {} copied to blob {} in bucket {}.".format(
@@ -99,6 +109,51 @@ def hello():
     return "Hello World!"
 
 
+def run_augmentations(aug_conf: dict, metadata: list[dict], task_id: str):
+    """
+    Apply augmentation to images from current run.
+
+    :param aug_conf: augmentation config coming from input
+    :param metadata: list of dict resulted from querying BigQuery
+    :param task_id: s3 path for specific run
+    """
+    storage_client = storage.Client()
+    source_bucket = storage_client.get_bucket(BUCKET_NAME)
+
+    for res in metadata:
+        image_id = res["image_id"]
+        min_height = aug_conf["albumentation"]["cropping"]["height"]["min"]
+        max_height = aug_conf["albumentation"]["cropping"]["height"]["max"]
+        width_resized = aug_conf["albumentation"]["resize"]["width"]
+        height_resized = aug_conf["albumentation"]["resize"]["height"]
+        logger.info(f"Applying augmentation: {image_id}.jpg")
+        logger.info(f"min_height: {min_height}")
+        logger.info(f"max_height: {max_height}")
+        logger.info(f"Width after resize: {width_resized}")
+        logger.info(f"Height after resize: {height_resized}")
+        source_blob = source_bucket.get_blob(f"{task_id}/images/{image_id}.jpg")
+        with source_blob.open() as original_img:
+            image = np.array(Image.open(original_img))
+
+        transform = A.Compose(
+            [
+                A.RandomSizedCrop(
+                    min_max_height=(min_height, max_height),
+                    height=height_resized,
+                    width=width_resized,
+                )
+            ]
+        )
+        random.seed(42)
+        _, augmented_image = cv2.imencode(".jpg", transform(image=image)["image"])
+
+        destination_blob = source_bucket.get_blob(
+            f"{task_id}/augmentation/{image_id}.jpg"
+        )
+        with destination_blob.open(mode="wb") as aug_f:
+            aug_f.write(augmented_image.tostring())
+
+
 def upload(result: list, task_id: str, metadata: list[dict]):
     """
     Uploads metadata and images for every run in s3.\
@@ -109,11 +164,13 @@ def upload(result: list, task_id: str, metadata: list[dict]):
     :return: None
     """
     metadata_path = f"fashion-tasks/{task_id}/metadata.json"
+    logger.info(f"Writing metadata into {metadata_path}")
     write_metadata(metadata, metadata_path)
 
     for image_id in result:
         blob_name = f"images/{image_id}"
         new_name = f"fashion-tasks/{task_id}/images/{image_id}"
+        logger.info(f"Copying {blob_name} into {new_name}")
         copy_blob(blob_name, new_name)
 
 

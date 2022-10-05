@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.7-slim
 
 # Copy local code to the container image.
 ENV APP_HOME /app
@@ -7,9 +7,12 @@ COPY /tcc-lucas-pierre-7490c66905ca.json $APP_HOME/tcc-lucas-pierre-7490c66905ca
 ENV GOOGLE_APPLICATION_CREDENTIALS=$APP_HOME/tcc-lucas-pierre-7490c66905ca.json
 COPY . .
 
-# Install production dependencies.
 RUN pip install Flask gunicorn
-RUN pip install -r requirements.txt
+RUN apt-get update -yqq && \
+    apt-get -yqq install libsndfile1 --no-install-recommends && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --compile -r /tmp/requirements.txt && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
 
 # Run the web service on container startup. Here we use the gunicorn
 # webserver, with one worker process and 8 threads.
