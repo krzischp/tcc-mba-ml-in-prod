@@ -13,6 +13,7 @@ from PIL import Image
 from flask import Flask, request, jsonify
 from google.cloud import bigquery
 from google.cloud import storage
+from io import BytesIO
 
 BUCKET_NAME = os.getenv("BUCKET_NAME")
 app = Flask(__name__)
@@ -72,11 +73,11 @@ def augmentation():
     if aug_conf:
         logger.info("Starting augmentation")
         logger.info("AUG_CONF: %s", aug_conf)
-        # run_augmentations(
-        #     aug_conf=aug_conf,
-        #     task_id=task_id,
-        #     metadata=metadata,
-        # )
+        run_augmentations(
+            aug_conf=aug_conf,
+            task_id=task_id,
+            metadata=metadata,
+        )
 
     return jsonify({"task_id": task_id})
 
@@ -91,8 +92,6 @@ def copy_blob(blob_name, destination_blob_name):
     blob_copy = source_bucket.copy_blob(
         source_blob, destination_bucket, destination_blob_name
     )
-    logger.info("BLOB_COPY: $s", blob_copy)
-
     print(
         "Blob {} in bucket {} copied to blob {} in bucket {}.".format(
             source_blob.name,
@@ -119,6 +118,7 @@ def run_augmentations(aug_conf: dict, metadata: list[dict], task_id: str):
     """
     storage_client = storage.Client()
     source_bucket = storage_client.get_bucket(BUCKET_NAME)
+    destination_bucket = storage_client.get_bucket(BUCKET_NAME)
 
     for res in metadata:
         image_id = res["image_id"]
@@ -131,9 +131,14 @@ def run_augmentations(aug_conf: dict, metadata: list[dict], task_id: str):
         logger.info(f"max_height: {max_height}")
         logger.info(f"Width after resize: {width_resized}")
         logger.info(f"Height after resize: {height_resized}")
-        source_blob = source_bucket.get_blob(f"{task_id}/images/{image_id}.jpg")
-        with source_blob.open() as original_img:
-            image = np.array(Image.open(original_img))
+        source_blob_path = f"fashion-tasks/{task_id}/images/{image_id}.jpg"
+
+        logger.info("SOURCE BLOB PATH: %s", source_blob_path)
+        source_blob = source_bucket.get_blob(source_blob_path)
+        logger.info("SOURCE BLOB: %s", source_blob)
+
+        original_img = source_blob.download_as_bytes()
+        image = np.asarray(Image.open(BytesIO(original_img)))
 
         transform = A.Compose(
             [
@@ -147,11 +152,18 @@ def run_augmentations(aug_conf: dict, metadata: list[dict], task_id: str):
         random.seed(42)
         _, augmented_image = cv2.imencode(".jpg", transform(image=image)["image"])
 
-        destination_blob = source_bucket.get_blob(
-            f"{task_id}/augmentation/{image_id}.jpg"
+        destination_blob = source_bucket.blob(
+            f"fashion-tasks/{task_id}/augmentation/{image_id}.jpg"
         )
-        with destination_blob.open(mode="wb") as aug_f:
-            aug_f.write(augmented_image.tostring())
+        print(
+            "AUGMENTATION - Blob {} in bucket {} copied to blob {} in bucket {}.".format(
+                source_blob.name,
+                source_bucket.name,
+                destination_blob.name,
+                destination_bucket.name,
+            )
+        )
+        destination_blob.upload_from_string(augmented_image.tobytes())
 
 
 def upload(result: list, task_id: str, metadata: list[dict]):
