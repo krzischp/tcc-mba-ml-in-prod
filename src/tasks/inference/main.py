@@ -1,4 +1,5 @@
-"""App Engine app to serve as an endpoint for App Engine queue samples."""
+# pylint: disable-all
+""""App Engine app to serve as an endpoint for App Engine queue samples."""
 from __future__ import annotations
 
 import logging

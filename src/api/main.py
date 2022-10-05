@@ -10,9 +10,11 @@ from starlette.responses import JSONResponse
 PROJECT_ID = "tcc-lucas-pierre"
 LOCATION = "southamerica-east1"
 QUEUE_IMAGERY = "imagery"
+QUEUE_INFERENCE = "inference"
 client = tasks_v2.CloudTasksClient()
 
-parent = client.queue_path(PROJECT_ID, LOCATION, QUEUE_IMAGERY)
+parent_imagery = client.queue_path(PROJECT_ID, LOCATION, QUEUE_IMAGERY)
+parent_inference = client.queue_path(PROJECT_ID, LOCATION, QUEUE_INFERENCE)
 
 
 app = FastAPI()
@@ -37,7 +39,8 @@ class FilterProductsModel(BaseModel):
 class InferenceModel(BaseModel):
     """Defines attributes for inference model"""
 
-    s3_target: str
+    task_id: str
+
 
 @app.post("/filter", status_code=201)
 async def upload_images(data: FilterProductsModel):
@@ -56,7 +59,7 @@ async def upload_images(data: FilterProductsModel):
     task["app_engine_http_request"]["headers"] = {"Content-type": "application/json"}
     converted_payload = data.json().encode("utf-8")
     task["app_engine_http_request"]["body"] = converted_payload
-    response = client.create_task(parent=parent, task=task)
+    response = client.create_task(parent=parent_imagery, task=task)
     print(f"Created task {response.name}")
 
     return JSONResponse({"task_id": response.name.split("tasks/")[1]})
@@ -69,7 +72,19 @@ async def predict_images(data: InferenceModel):
 
     :param data: request input
     """
-    return "Hello"
+    task = {
+        "app_engine_http_request": {  # Specify the type of request.
+            "http_method": tasks_v2.HttpMethod.POST,
+            "relative_uri": "/inference",
+        }
+    }
+    task["app_engine_http_request"]["headers"] = {"Content-type": "application/json"}
+    converted_payload = data.json().encode("utf-8")
+    task["app_engine_http_request"]["body"] = converted_payload
+    response = client.create_task(parent=parent_inference, task=task)
+    print(f"Created inference task {response.name}")
+
+    return JSONResponse({"inference_task_id": response.name.split("tasks/")[1]})
 
 
 @app.get("/task/{task_id}", status_code=200)
