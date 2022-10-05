@@ -1,0 +1,4 @@
+runtime: python37
+service: imagery
+env_variables:
+  BUCKET_NAME: "tcc-clothes"

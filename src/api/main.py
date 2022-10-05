@@ -3,15 +3,17 @@
 from typing import Optional, Any
 
 from fastapi import FastAPI
-from google.cloud import pubsub_v1
+from google.cloud import tasks_v2
 from pydantic import BaseModel
 from starlette.responses import JSONResponse
 
 PROJECT_ID = "tcc-lucas-pierre"
-TOPIC_ID = "tcc_mba"
+LOCATION = "southamerica-east1"
+QUEUE_IMAGERY = "imagery"
+client = tasks_v2.CloudTasksClient()
 
-publisher = pubsub_v1.PublisherClient()
-topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
+parent = client.queue_path(PROJECT_ID, LOCATION, QUEUE_IMAGERY)
+
 
 app = FastAPI()
 
@@ -50,15 +52,24 @@ class InferenceModel(BaseModel):
 @app.post("/filter", status_code=201)
 async def upload_images(data: FilterProductsModel):
     """
-    Builds query to filter products in database and send as parameter to a PubSub topic.
+    Builds query to filter products in database and send as parameter to a Cloud Task.
 
     :param data: request input
-    :returns: PubSub message id
+    :returns: Cloud Task id
     """
-    future = publisher.publish(topic_path, data.json().encode("utf-8"))
-    task_id = future.result()
+    task = {
+        "app_engine_http_request": {  # Specify the type of request.
+            "http_method": tasks_v2.HttpMethod.POST,
+            "relative_uri": "/augmentation",
+        }
+    }
+    task["app_engine_http_request"]["headers"] = {"Content-type": "application/json"}
+    converted_payload = data.json().encode("utf-8")
+    task["app_engine_http_request"]["body"] = converted_payload
+    response = client.create_task(parent=parent, task=task)
+    print(f"Created task {response.name}")
 
-    return JSONResponse({"task_id": task_id})
+    return JSONResponse({"task_id": response.name.split("tasks/")[1]})
 
 
 @app.post("/predict", status_code=201)

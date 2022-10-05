@@ -1,46 +1,12 @@
 version: '3.8'
 
 services:
-  imagery_worker:
-    image: gcr.io/tcc-lucas-pierre/imagery_worker
-    build: ./src/workers/imagery
-    container_name: celery-imagery
-    env_file:
-      - 'variables.env'
-    environment:
-      - BUCKET_NAME=fashion-tasks
-      - DATA_FOLDER=data
-    networks:
-      - network
-    command: tail -f /dev/null
-
-  inference_worker:
-    image: gcr.io/tcc-lucas-pierre/inference_worker
-    build:
-      context: ./src/workers/inference
-      shm_size: '2gb'
-    container_name: celery-inference
-    env_file:
-      - 'variables.env'
-    environment:
-      - BUCKET_NAME=fashion-tasks
-      - DATA_FOLDER=data
-      - INFERENCE_DEVICE=cpu
-      - BATCH_SIZE=10
-      - NUM_WORKERS=2
-    networks:
-      - network
-    command: tail -f /dev/null
-
   api:
     image: gcr.io/tcc-lucas-pierre/api
     build: ./src/api
-    container_name: fashion-api
+    container_name: api
     env_file:
       - 'variables.env'
-    depends_on:
-      - imagery_worker
-      - inference_worker
     ports:
       - 5000:5000
     networks:
@@ -49,7 +15,7 @@ services:
   client:
     image: gcr.io/tcc-lucas-pierre/client
     build: ./src/client
-    container_name: fashion-client
+    container_name: client
     volumes:
       - ./src/client/notebooks:/home/jovyan/notebooks
     ports:
