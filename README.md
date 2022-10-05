@@ -83,3 +83,5 @@ Then you can access <EXTERNAL-IP:PORT> in your browser and you're ready to execu
 We didn't integrate these projects here because of the non-inclusion of enough resources in Google Cloud free tier. But when extending to the paying version, this would be a very useful improvement to benefit from **Kubeflow Pipeline** for scheduling and monitoring job/etl executions, as well as for experiment tracking.
 
 * Use GPU resources to reduce inference time
+* Put credentials on Secrets
+* Monitoring/Validating results and model being deprecated in accuracy

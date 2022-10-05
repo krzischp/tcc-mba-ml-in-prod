@@ -3,7 +3,15 @@
 from typing import Optional, Any
 
 from fastapi import FastAPI
+from google.cloud import pubsub_v1
 from pydantic import BaseModel
+from starlette.responses import JSONResponse
+
+PROJECT_ID = "tcc-lucas-pierre"
+TOPIC_ID = "tcc_mba"
+
+publisher = pubsub_v1.PublisherClient()
+topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
 
 app = FastAPI()
 
@@ -42,38 +50,21 @@ class InferenceModel(BaseModel):
 @app.post("/filter", status_code=201)
 async def upload_images(data: FilterProductsModel):
     """
-    Builds query to filter products in database and send as parameter to a celery task.
+    Builds query to filter products in database and send as parameter to a PubSub topic.
 
     :param data: request input
-    :returns: celery task id
+    :returns: PubSub message id
     """
-    aug_config = (
-        data.augmentation_config["albumentation"] if data.augmentation_config else None
-    )
-    query = f"""SELECT image_id,
-                       gender,
-                       master_category,
-                       sub_category,
-                       article_type,
-                       base_colour,
-                       season,
-                       year,
-                       usage,
-                       display_name
-                FROM products
-                WHERE gender = '{data.gender}' AND
-                      sub_category = '{data.sub_category}' AND
-                      year = '{data.start_year}'
-                LIMIT {data.limit}
-            """
+    future = publisher.publish(topic_path, data.json().encode("utf-8"))
+    task_id = future.result()
 
-    return query
+    return JSONResponse({"task_id": task_id})
 
 
 @app.post("/predict", status_code=201)
 async def predict_images(data: InferenceModel):
     """
-    Wrapper to make inferences about images. Calls a celery task.
+    Wrapper to make inferences about images. Calls a async task.
 
     :param data: request input
     """

@@ -9,7 +9,7 @@ USER root
 # RUN chmod -R 777 /home/jovyan
 # mounted notebooks folder doesn't exist yet in Kubernetes because it is a VolumeClaim
 # it only exists on local with docker-compose.yaml as an existing volume is mounted before Dockerfile execution
-COPY notebooks/eda.ipynb /home/jovyan/eda.ipynb
+COPY notebooks/client.ipynb /home/jovyan/eda.ipynb
 # RUN chown -R ${NB_UID}:${NB_GID} /home/jovyan
 RUN chown ${NB_UID}:${NB_GID} /home/jovyan/eda.ipynb
 USER ${NB_UID}
