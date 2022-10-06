@@ -2,14 +2,17 @@
 """"App Engine app to serve as an endpoint for App Engine queue samples."""
 from __future__ import annotations
 
+import json
 import logging
 import os
 
 import torch
-from flask import Flask, request, jsonify
+from flask import Flask, request
 from google.cloud import storage
+from torch.utils.data import DataLoader
 
 from deepfashion import FashionNetVgg16NoBn
+from utils.dataset import ImagesDataset
 
 BUCKET_NAME = os.getenv("BUCKET_NAME")
 app = Flask(__name__)
@@ -53,7 +56,7 @@ def list_blobs_with_prefix(bucket_name, prefix, images_filepaths, delimiter=None
     # Note: The call returns a response only when the iterator is consumed.
     print("Blobs:")
     for blob in blobs:
-        if ".jpg" in blob:
+        if ".jpg" in blob.name:
             print(blob.name)
             images_filepaths.append(blob.name)
     return images_filepaths
@@ -64,11 +67,6 @@ def inference_task():
     """Log the request payload."""
     payload = request.get_json()
     task_id = payload["task_id"]
-    print(task_id)
-    print(task_id)
-    print(task_id)
-    print(task_id)
-    print(task_id)
     print(task_id)
 
     fn = FashionNetVgg16NoBn()
@@ -83,22 +81,49 @@ def inference_task():
             torch.nn.init.xavier_normal_(fn.state_dict()[k])
 
     images_filepaths = []
-    prefix = f"fashion-tasks/{task_id}/"
+    prefix = f"tasks/{task_id}/"
     images_filepaths = list_blobs_with_prefix(BUCKET_NAME, prefix, images_filepaths)
     print(images_filepaths)
-    print(images_filepaths)
-    print(images_filepaths)
-    print(images_filepaths)
-    print(images_filepaths)
-    print(images_filepaths)
 
-    return jsonify({"images": images_filepaths})
+    images_dataset = ImagesDataset(images_filepaths=images_filepaths)
+    loader = DataLoader(images_dataset)
+    predicted_labels = []
+    with torch.no_grad():
+        for image, image_name in loader:
+            output = fn(image)
+            predicted_labels.append(
+                {
+                    "image_name": image_name,
+                    "massive_attr": output[0].tolist(),
+                    "categories": output[1].tolist(),
+                }
+            )
+    upload_inferences(result=predicted_labels, task_id=task_id)
+
+    return {"run_id": task_id}
 
 
 @app.route("/")
 def hello():
     """Basic index to verify app is serving."""
     return "Hello World!"
+
+
+def upload_inferences(result: list[dict], task_id: str) -> None:
+    """
+    Uploads predictions to S3.
+
+    :param result: list of dict resulted from inference
+    :param task_id: id for the run
+    :return: None
+    """
+    logger.info("Uploading metadata and images")
+
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(BUCKET_NAME)
+    predictions_path = f"tasks/{task_id}/predictions.json"
+    blob = bucket.blob(predictions_path)
+    blob.upload_from_string(json.dumps(result))
 
 
 def upload_blob_from_memory(

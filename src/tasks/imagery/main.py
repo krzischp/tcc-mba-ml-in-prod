@@ -131,7 +131,7 @@ def run_augmentations(aug_conf: dict, metadata: list[dict], task_id: str):
         logger.info(f"max_height: {max_height}")
         logger.info(f"Width after resize: {width_resized}")
         logger.info(f"Height after resize: {height_resized}")
-        source_blob_path = f"fashion-tasks/{task_id}/images/{image_id}.jpg"
+        source_blob_path = f"tasks/{task_id}/images/{image_id}.jpg"
 
         logger.info("SOURCE BLOB PATH: %s", source_blob_path)
         source_blob = source_bucket.get_blob(source_blob_path)
@@ -153,7 +153,7 @@ def run_augmentations(aug_conf: dict, metadata: list[dict], task_id: str):
         _, augmented_image = cv2.imencode(".jpg", transform(image=image)["image"])
 
         destination_blob = source_bucket.blob(
-            f"fashion-tasks/{task_id}/augmentation/{image_id}.jpg"
+            f"tasks/{task_id}/augmentation/{image_id}.jpg"
         )
         print(
             "AUGMENTATION - Blob {} in bucket {} copied to blob {} in bucket {}.".format(
@@ -175,19 +175,19 @@ def upload(result: list, task_id: str, metadata: list[dict]):
     :param metadata: task metadata
     :return: None
     """
-    metadata_path = f"fashion-tasks/{task_id}/metadata.json"
+    metadata_path = f"tasks/{task_id}/metadata.json"
     logger.info(f"Writing metadata into {metadata_path}")
     write_metadata(metadata, metadata_path)
 
     for image_id in result:
         blob_name = f"images/{image_id}"
-        new_name = f"fashion-tasks/{task_id}/images/{image_id}"
+        new_name = f"tasks/{task_id}/images/{image_id}"
         logger.info(f"Copying {blob_name} into {new_name}")
         copy_blob(blob_name, new_name)
 
 
 def write_metadata(metadata, metadata_path):
-    """Copies a blob from one bucket to another with a new name."""
+    """Writes metadata for the run"""
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(BUCKET_NAME)
     blob = bucket.blob(metadata_path)
