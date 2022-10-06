@@ -11,8 +11,8 @@ PROJECT_ID = "tcc-lucas-pierre"
 LOCATION = "southamerica-east1"
 QUEUE_IMAGERY = "imagery"
 QUEUE_INFERENCE = "inference"
-client = tasks_v2.CloudTasksClient()
 
+client = tasks_v2.CloudTasksClient()
 parent_imagery = client.queue_path(PROJECT_ID, LOCATION, QUEUE_IMAGERY)
 parent_inference = client.queue_path(PROJECT_ID, LOCATION, QUEUE_INFERENCE)
 
@@ -59,7 +59,6 @@ async def upload_images(data: FilterProductsModel):
     converted_payload = data.json().encode("utf-8")
     task["app_engine_http_request"]["body"] = converted_payload
     response = client.create_task(parent=parent_imagery, task=task)
-    print(f"Created task {response.name}")
 
     return JSONResponse({"task_id": response.name.split("tasks/")[1]})
 
@@ -81,7 +80,6 @@ async def predict_images(data: InferenceModel):
     converted_payload = data.json().encode("utf-8")
     task["app_engine_http_request"]["body"] = converted_payload
     response = client.create_task(parent=parent_inference, task=task)
-    print(f"Created inference task {response.name}")
 
     return JSONResponse({"task_id": response.name.split("tasks/")[1]})
 
