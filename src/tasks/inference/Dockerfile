@@ -12,6 +12,7 @@ COPY /requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir --compile -r /tmp/requirements.txt && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
+RUN pip install -U typing_extensions
 
 ADD utils $APP_DIR/utils
 ADD deepfashion.py $APP_DIR/
