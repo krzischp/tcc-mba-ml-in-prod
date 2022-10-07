@@ -2,6 +2,8 @@ FROM python:3.7-slim
 
 ENV APP_HOME /app
 WORKDIR $APP_HOME
+COPY /tcc-lucas-pierre-7490c66905ca.json $APP_HOME/tcc-lucas-pierre-7490c66905ca.json
+ENV GOOGLE_APPLICATION_CREDENTIALS=$APP_HOME/tcc-lucas-pierre-7490c66905ca.json
 COPY . .
 
 RUN pip install Flask gunicorn
