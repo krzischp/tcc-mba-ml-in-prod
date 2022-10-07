@@ -1,3 +1,4 @@
+# pylint: disable=import-error
 """App Engine app to serve imagery worker."""
 from __future__ import annotations
 
@@ -23,9 +24,41 @@ logger.setLevel(logging.INFO)
 client = bigquery.Client()
 
 
-@app.route("/augmentation", methods=["POST"])
-def augmentation():
-    """Log the request payload."""
+def copy_blob(blob_name, destination_blob_name):
+    """Copies a blob from one bucket to another with a new name.
+
+    :param blob_name: blob name to be copied to another folder
+    :param destination_blob_name: name of the destination blob
+    """
+    storage_client = storage.Client()
+
+    source_bucket = storage_client.get_bucket(BUCKET_NAME)
+    destination_bucket = storage_client.get_bucket(BUCKET_NAME)
+    source_blob = source_bucket.get_blob(blob_name)
+    blob_copy = source_bucket.copy_blob(
+        source_blob, destination_bucket, destination_blob_name
+    )
+    print(
+        "Blob {} in bucket {} copied to blob {} in bucket {}.".format(
+            source_blob.name,
+            source_bucket.name,
+            blob_copy.name,
+            destination_bucket.name,
+        )
+    )
+
+
+@app.route("/")
+def hello():
+    """Basic index to verify app is serving."""
+    return "Hello World!"
+
+
+@app.route("/imagery", methods=["POST"])
+def imagery():
+    """Entrypoint for the imagery worker.
+    Builds the query to filter images in BigQuery and wraps methods to perform augmentation
+    """
     images_to_upload = []
     payload = request.get_json()
     task_id = request.headers.get("X-Appengine-Taskname")
@@ -82,39 +115,13 @@ def augmentation():
     return jsonify({"task_id": task_id})
 
 
-def copy_blob(blob_name, destination_blob_name):
-    """Copies a blob from one bucket to another with a new name."""
-    storage_client = storage.Client()
-
-    source_bucket = storage_client.get_bucket(BUCKET_NAME)
-    destination_bucket = storage_client.get_bucket(BUCKET_NAME)
-    source_blob = source_bucket.get_blob(blob_name)
-    blob_copy = source_bucket.copy_blob(
-        source_blob, destination_bucket, destination_blob_name
-    )
-    print(
-        "Blob {} in bucket {} copied to blob {} in bucket {}.".format(
-            source_blob.name,
-            source_bucket.name,
-            blob_copy.name,
-            destination_bucket.name,
-        )
-    )
-
-
-@app.route("/")
-def hello():
-    """Basic index to verify app is serving."""
-    return "Hello World!"
-
-
 def run_augmentations(aug_conf: dict, metadata: list[dict], task_id: str):
     """
     Apply augmentation to images from current run.
 
     :param aug_conf: augmentation config coming from input
     :param metadata: list of dict resulted from querying BigQuery
-    :param task_id: s3 path for specific run
+    :param task_id: id of the specific run - will define the path in GCS
     """
     storage_client = storage.Client()
     source_bucket = storage_client.get_bucket(BUCKET_NAME)
@@ -187,7 +194,11 @@ def upload(result: list, task_id: str, metadata: list[dict]):
 
 
 def write_metadata(metadata, metadata_path):
-    """Writes metadata for the run"""
+    """Writes metadata for the run
+
+    :param metadata: metadata to be written in GCS
+    :param metadata_path: path to write metadata info about specific run
+    """
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(BUCKET_NAME)
     blob = bucket.blob(metadata_path)

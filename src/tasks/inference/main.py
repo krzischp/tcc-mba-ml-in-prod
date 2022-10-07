@@ -1,4 +1,4 @@
-# pylint: disable-all
+# pylint: disable=import-error
 """"App Engine app to serve inference worker."""
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ def inference_task():
     """Entrypoint for the inference Cloud Task."""
     payload = request.get_json()
     task_id = payload["task_id"]
-    print(task_id)
+    logger.info("Running inference for task_id: %s", task_id)
 
     fn = FashionNetVgg16NoBn()
 
@@ -47,7 +47,9 @@ def inference_task():
     images_filepaths = []
     prefix = f"tasks/{task_id}/"
     images_filepaths = list_blobs_with_prefix(BUCKET_NAME, prefix, images_filepaths)
-    print(images_filepaths)
+    logger.info("Images for task_id: %s", task_id)
+    for img in images_filepaths:
+        logger.info(img)
 
     images_dataset = ImagesDataset(images_filepaths=images_filepaths)
     loader = DataLoader(images_dataset)
@@ -101,17 +103,15 @@ def list_blobs_with_prefix(bucket_name, prefix, images_filepaths, delimiter=None
     blobs = storage_client.list_blobs(bucket_name, prefix=prefix, delimiter=delimiter)
 
     # Note: The call returns a response only when the iterator is consumed.
-    print("Blobs:")
     for blob in blobs:
         if ".jpg" in blob.name:
-            print(blob.name)
             images_filepaths.append(blob.name)
     return images_filepaths
 
 
 def upload_inferences(result: list[dict], task_id: str) -> None:
     """
-    Uploads predictions to S3.
+    Uploads inferences to Google Cloud Storage.
 
     :param result: list of dict resulted from inference
     :param task_id: id for the run
@@ -121,24 +121,27 @@ def upload_inferences(result: list[dict], task_id: str) -> None:
 
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(BUCKET_NAME)
-    predictions_path = f"tasks/{task_id}/predictions.json"
+    predictions_path = f"tasks/{task_id}/inferences.json"
     blob = bucket.blob(predictions_path)
+    logger.info("Uploading inferences for task_id: %s", task_id)
     blob.upload_from_string(json.dumps(result))
 
 
 def upload_blob_from_memory(
     bucket_name, contents, destination_blob_name, content_type="text/plain"
 ):
-    """Uploads a file to the bucket."""
+    """Uploads a file to GCS bucket.
+
+    :param bucket_name: name of GCS bucket
+    :param contents: content to be uploaded
+    :param destination_blob_name: name of the destination blob name
+    :param content_type: defines the content type
+    """
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
 
     blob.upload_from_string(contents, content_type=content_type)
-
-    print(
-        f"{destination_blob_name} with contents {contents} uploaded to {bucket_name}."
-    )
 
 
 if __name__ == "__main__":
