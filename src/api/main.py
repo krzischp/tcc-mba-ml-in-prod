@@ -43,17 +43,20 @@ class InferenceModel(BaseModel):
 
 
 @app.get("/task/{task_id}", status_code=200)
-def get_task_result(task_id: str):
+def get_task_result(task_id: str, queue: str):
     """
     Use this endpoint to check the status of a task
 
     :param task_id: Cloud Task id
+    :param queue: queue to fetch task id status
     """
+    print(task_id)
+    print(queue)
     try:
-        request = tasks_v2.GetTaskRequest(
-            name=f"projects/{PROJECT_ID}/locations/{LOCATION}/queues/{QUEUE_IMAGERY}/tasks/{task_id}",
+        req = tasks_v2.GetTaskRequest(
+            name=f"projects/{PROJECT_ID}/locations/{LOCATION}/queues/{queue}/tasks/{task_id}",
         )
-        response = client.get_task(request=request)
+        response = client.get_task(request=req)
         first_attempt = response.first_attempt if response.first_attempt else None
         status = "FAILED" if first_attempt else "PENDING"
         return JSONResponse({"status": status})
@@ -81,7 +84,7 @@ async def imagery(data: ImageryModel):
     task["app_engine_http_request"]["body"] = converted_payload
     response = client.create_task(parent=parent_imagery, task=task)
 
-    return JSONResponse({"task_id": response.name.split("tasks/")[1]})
+    return JSONResponse({"task_id": response.name.split("tasks/")[1], "queue": "imagery"})
 
 
 @app.post("/predict", status_code=201)
@@ -102,4 +105,4 @@ async def inference(data: InferenceModel):
     task["app_engine_http_request"]["body"] = converted_payload
     response = client.create_task(parent=parent_inference, task=task)
 
-    return JSONResponse({"task_id": response.name.split("tasks/")[1]})
+    return JSONResponse({"task_id": response.name.split("tasks/")[1], "queue": "inference"})
