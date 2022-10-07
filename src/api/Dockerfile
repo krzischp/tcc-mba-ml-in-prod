@@ -12,10 +12,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
 
 ADD /app $APP_DIR/app/
-ADD /bin $APP_DIR/bin/
 ADD /tests $APP_DIR/tests/
 ADD main.py $APP_DIR/
-
-EXPOSE 5000 6379 5672
 
 CMD uvicorn main:app --host 0.0.0.0 --port 5000

@@ -1,20 +1,72 @@
-# pylint: disable-all
-""""App Engine app to serve as an endpoint for App Engine queue samples."""
+# pylint: disable=import-error
+""""App Engine app to serve inference worker."""
 from __future__ import annotations
 
+import json
 import logging
 import os
 
 import torch
-from flask import Flask, request, jsonify
+from flask import Flask, request
 from google.cloud import storage
+from torch.utils.data import DataLoader
 
 from deepfashion import FashionNetVgg16NoBn
+from utils.dataset import ImagesDataset
 
 BUCKET_NAME = os.getenv("BUCKET_NAME")
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+
+@app.route("/")
+def hello():
+    """Basic index to verify app is serving."""
+    return "Hello World!"
+
+
+@app.route("/inference", methods=["POST"])
+def inference_task():
+    """Entrypoint for the inference Cloud Task."""
+    payload = request.get_json()
+    task_id = payload["task_id"]
+    logger.info("Running inference for task_id: %s", task_id)
+
+    fn = FashionNetVgg16NoBn()
+
+    # pose network needs to be trained from scratch? i guess?
+    for k in fn.state_dict().keys():
+        if "conv5_pose" in k and "weight" in k:
+            torch.nn.init.xavier_normal_(fn.state_dict()[k])
+
+    for k in fn.state_dict().keys():
+        if "conv5_global" in k and "weight" in k:
+            torch.nn.init.xavier_normal_(fn.state_dict()[k])
+
+    images_filepaths = []
+    prefix = f"tasks/{task_id}/"
+    images_filepaths = list_blobs_with_prefix(BUCKET_NAME, prefix, images_filepaths)
+    logger.info("Images for task_id: %s", task_id)
+    for img in images_filepaths:
+        logger.info(img)
+
+    images_dataset = ImagesDataset(images_filepaths=images_filepaths)
+    loader = DataLoader(images_dataset)
+    predicted_labels = []
+    with torch.no_grad():
+        for image, image_name in loader:
+            output = fn(image)
+            predicted_labels.append(
+                {
+                    "image_name": image_name,
+                    "massive_attr": output[0].tolist(),
+                    "categories": output[1].tolist(),
+                }
+            )
+    upload_inferences(result=predicted_labels, task_id=task_id)
+
+    return {"run_id": task_id}
 
 
 def list_blobs_with_prefix(bucket_name, prefix, images_filepaths, delimiter=None):
@@ -51,82 +103,48 @@ def list_blobs_with_prefix(bucket_name, prefix, images_filepaths, delimiter=None
     blobs = storage_client.list_blobs(bucket_name, prefix=prefix, delimiter=delimiter)
 
     # Note: The call returns a response only when the iterator is consumed.
-    print("Blobs:")
     for blob in blobs:
-        if ".jpg" in blob:
-            print(blob.name)
+        if ".jpg" in blob.name:
             images_filepaths.append(blob.name)
     return images_filepaths
 
 
-@app.route("/inference", methods=["POST"])
-def inference_task():
-    """Log the request payload."""
-    payload = request.get_json()
-    task_id = payload["task_id"]
-    print(task_id)
-    print(task_id)
-    print(task_id)
-    print(task_id)
-    print(task_id)
-    print(task_id)
+def upload_inferences(result: list[dict], task_id: str) -> None:
+    """
+    Uploads inferences to Google Cloud Storage.
 
-    fn = FashionNetVgg16NoBn()
+    :param result: list of dict resulted from inference
+    :param task_id: id for the run
+    :return: None
+    """
+    logger.info("Uploading metadata and images")
 
-    # pose network needs to be trained from scratch? i guess?
-    for k in fn.state_dict().keys():
-        if "conv5_pose" in k and "weight" in k:
-            torch.nn.init.xavier_normal_(fn.state_dict()[k])
-
-    for k in fn.state_dict().keys():
-        if "conv5_global" in k and "weight" in k:
-            torch.nn.init.xavier_normal_(fn.state_dict()[k])
-
-    images_filepaths = []
-    prefix = f"fashion-tasks/{task_id}/"
-    images_filepaths = list_blobs_with_prefix(BUCKET_NAME, prefix, images_filepaths)
-    print(images_filepaths)
-    print(images_filepaths)
-    print(images_filepaths)
-    print(images_filepaths)
-    print(images_filepaths)
-    print(images_filepaths)
-
-    return jsonify({"images": images_filepaths})
-
-
-@app.route("/")
-def hello():
-    """Basic index to verify app is serving."""
-    return "Hello World!"
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(BUCKET_NAME)
+    predictions_path = f"tasks/{task_id}/inferences.json"
+    blob = bucket.blob(predictions_path)
+    logger.info("Uploading inferences for task_id: %s", task_id)
+    blob.upload_from_string(json.dumps(result))
 
 
 def upload_blob_from_memory(
     bucket_name, contents, destination_blob_name, content_type="text/plain"
 ):
-    """Uploads a file to the bucket."""
+    """Uploads a file to GCS bucket.
 
-    # The ID of your GCS bucket
-    # bucket_name = "your-bucket-name"
-
-    # The contents to upload to the file
-    # contents = "these are my contents"
-
-    # The ID of your GCS object
-    # destination_blob_name = "storage-object-name"
-
+    :param bucket_name: name of GCS bucket
+    :param contents: content to be uploaded
+    :param destination_blob_name: name of the destination blob name
+    :param content_type: defines the content type
+    """
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
 
     blob.upload_from_string(contents, content_type=content_type)
 
-    print(
-        f"{destination_blob_name} with contents {contents} uploaded to {bucket_name}."
-    )
-
 
 if __name__ == "__main__":
     # This is used when running locally. Gunicorn is used to run the
-    # application on Google App Engine. See entrypoint in app.yaml.
+    # application on Google App Engine.
     app.run(host="127.0.0.1", port=8080, debug=True)

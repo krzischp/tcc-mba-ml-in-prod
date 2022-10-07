@@ -1,5 +1,10 @@
-runtime: python37
-service: infer
+runtime: custom
+env: flex
+service: inference
 instance_class: F4
+resources:
+  cpu: 4
+  memory_gb: 16
+  disk_size_gb: 20
 env_variables:
   BUCKET_NAME: "tcc-clothes"
