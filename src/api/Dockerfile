@@ -11,7 +11,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir --compile -r requirements.txt && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/*
 
-ADD /app $APP_DIR/app/
 ADD /tests $APP_DIR/tests/
 ADD main.py $APP_DIR/
 
