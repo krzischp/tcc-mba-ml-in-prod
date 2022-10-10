@@ -4,7 +4,7 @@ This project is a scalable generic solution to deploy a fashion images classifie
 
 # Architecture
 
-![Architecture](./diagrams/tcc-arch.png)
+![Architecture](./diagrams/tcc-architecture.png)
 
 # Project instructions
 
