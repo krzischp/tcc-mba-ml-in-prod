@@ -8,11 +8,9 @@ This project is a scalable generic solution to deploy a fashion images classifie
 
 # Project instructions
 
-## Prerequesites
-
-This project needs docker >= 20 and docker-compose >= 1.29. Installation:
-
 ## Execute the project locally
+
+This project needs docker >= 20 and docker-compose >= 1.29.
 
 ### Build
 
@@ -42,10 +40,10 @@ make down
 
 ### Tasks
 
-Open the notebook in the url outputted by the `make up` command. In the notebook you will see three different tasks.
+Open the notebook in the url outputted by the `make up` command. In the notebook you will see a mocked client for the image classifier app.
 
-1. Implement functionality to upload images based on a sql query to **Cloud Storage**
-2. Add augmentation to the Step 1
+1. When you make a call to the running classifier app it will filter **BigQuery** to fetch the image ids that match attributes on the payload and store those images with a specific bucket prefix on **Google Cloud Storage**. 
+2. Augmentation can be performed based on augmentation config also present on the request payload
 3. Run model inference on query results from Step 1 or Step 2
 
 ## Execute the project on Kubernetes
@@ -66,7 +64,7 @@ docker-compose push
 
 Then you can add files from `k8s` folder to your GCP editor file system, and execute them with this command line:
 ```sh
-kubectl apply -f api-deployment.yaml,api-service.yaml,backend-deployment.yaml,backend-service.yaml,broker-deployment.yaml,broker-service.yaml,client-claim0-persistentvolumeclaim.yaml,client-deployment.yaml,client-service.yaml,database-claim0-persistentvolumeclaim.yaml,database-deployment.yaml,database-service.yaml,imagery-worker-deployment.yaml,inference-worker-deployment.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
+kubectl apply -f api-deployment.yaml,api-service.yaml,network-networkpolicy.yaml,variables-env-configmap.yaml
 ```
 This will create all the needed Kubernetes deployments and services to reproduce the same steps you executed locally in Google Cloud.
 
