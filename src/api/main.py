@@ -50,8 +50,6 @@ def get_task_result(task_id: str, queue: str):
     :param task_id: Cloud Task id
     :param queue: queue to fetch task id status
     """
-    print(task_id)
-    print(queue)
     try:
         req = tasks_v2.GetTaskRequest(
             name=f"projects/{PROJECT_ID}/locations/{LOCATION}/queues/{queue}/tasks/{task_id}",
@@ -60,8 +58,7 @@ def get_task_result(task_id: str, queue: str):
         first_attempt = response.first_attempt if response.first_attempt else None
         status = "FAILED" if first_attempt else "PENDING"
         return JSONResponse({"status": status})
-    except Exception as ex:
-        print(ex)
+    except Exception:
         return JSONResponse({"status": "SUCCESS"})
 
 
