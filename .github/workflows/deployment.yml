@@ -1,4 +1,4 @@
-name: CD4ML
+name: CD4ML - Deployment
 run-name: ${{ github.run_id }} - main
 on:
   push:
