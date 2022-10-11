@@ -38,7 +38,7 @@ jobs:
         continue-on-error: true
       - name: Build Docker Image
         run: |
-          docker build ./src/api -t gcr.io/tcc-lucas-pierre/api:${{ github.run_id }} - ${{ github.ref_name }}
-          docker push gcr.io/tcc-lucas-pierre/api:${{ github.run_id }} - ${{ github.ref_name }}
+          docker build ./src/api -t gcr.io/tcc-lucas-pierre/api:${{ github.ref_name }}-${{ github.run_id }}
+          docker push gcr.io/tcc-lucas-pierre/api:${{ github.ref_name }}-${{ github.run_id }}
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
