@@ -191,6 +191,3 @@ jobs:
 
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
-
-      - name: 'Job Status!'
-        run: echo "${{ job.status }}!"
