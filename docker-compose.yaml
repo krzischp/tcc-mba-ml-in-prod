@@ -19,7 +19,7 @@ services:
     build: ./src/client
     container_name: client
     volumes:
-      - ./src/client/notebooks:/home/jovyan/notebooks
+      - ./src/client:/home/jovyan/notebooks
       - ./src/mnt:/mnt
     ports:
       - 8888:8888
