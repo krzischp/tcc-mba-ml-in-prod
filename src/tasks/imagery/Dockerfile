@@ -4,7 +4,7 @@ ENV APP_HOME /app
 WORKDIR $APP_HOME
 COPY . .
 
-RUN pip install Flask gunicorn
+COPY /requirements.txt /tmp/requirements.txt
 RUN apt-get update -yqq && \
     apt-get -yqq install libsndfile1 --no-install-recommends && \
     pip install --no-cache-dir --upgrade pip && \
