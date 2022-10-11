@@ -3,7 +3,6 @@ data:
   API_HOST: api
 kind: ConfigMap
 metadata:
-  creationTimestamp: null
   labels:
     io.kompose.service: api-variables-env
   name: variables-env

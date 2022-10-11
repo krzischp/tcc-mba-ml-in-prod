@@ -32,5 +32,19 @@ services:
     networks:
       - network
 
+  mlflow:
+    container_name: mlflow
+    build: ./src/mlflow
+    volumes:
+      - ./src/mnt:/mnt
+    env_file:
+      - 'variables.env'
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${SECRET_KEY}
+    ports:
+      - "12000:5000"
+
 networks:
     network: {}
