@@ -1,5 +1,5 @@
 name: CD4ML - Integration
-run-name: ${{ github.run_id }} - ${{ github.ref_name }}
+run-name: ${{ github.run_id }} - ${{ github.head_ref }}
 on:
   pull_request:
     types:
@@ -36,10 +36,10 @@ jobs:
       - name: Build Docker Image
         run: |
           gcloud auth configure-docker -q
-          docker build ./src/api -t gcr.io/tcc-lucas-pierre/api:${{ github.ref_name }}
+          docker build ./src/api -t gcr.io/tcc-lucas-pierre/api:${{ github.head_ref }}
       - name: Publish Docker Image
         run: |
-          docker push gcr.io/tcc-lucas-pierre/api:${{ github.ref_name }}
+          docker push gcr.io/tcc-lucas-pierre/api:${{ github.head_ref }}
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
   BuildImagery:
@@ -68,10 +68,10 @@ jobs:
       - name: Build Docker Image
         run: |
           gcloud auth configure-docker -q
-          docker build ./src/tasks/imagery -t gcr.io/tcc-lucas-pierre/imagery:${{ github.ref_name }}
+          docker build ./src/tasks/imagery -t gcr.io/tcc-lucas-pierre/imagery:${{ github.head_ref }}
       - name: Publish Docker Image
         run: |
-          docker push gcr.io/tcc-lucas-pierre/imagery:${{ github.ref_name }}
+          docker push gcr.io/tcc-lucas-pierre/imagery:${{ github.head_ref }}
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
   BuildInference:
@@ -100,10 +100,10 @@ jobs:
       - name: Build Docker Image
         run: |
           gcloud auth configure-docker -q
-          docker build ./src/tasks/inference -t gcr.io/tcc-lucas-pierre/inference:${{ github.ref_name }}
+          docker build ./src/tasks/inference -t gcr.io/tcc-lucas-pierre/inference:${{ github.head_ref }}
       - name: Publish Docker Image
         run: |
-          docker push gcr.io/tcc-lucas-pierre/inference:${{ github.ref_name }}
+          docker push gcr.io/tcc-lucas-pierre/inference:${{ github.head_ref }}
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
   DeployAPIDev:
@@ -125,7 +125,7 @@ jobs:
         run: |
           gcloud auth configure-docker -q
           gcloud container clusters get-credentials tcc-cluster --region us-east1
-          helm upgrade --install --set image.tag=${{ github.ref_name }},service.name=api-${{ github.ref_name }},queue.imagery=imagery-${{ github.ref_name }},queue.inference=inference-${{ github.ref_name }}  api-${{ github.ref_name }} ./api-chart
+          helm upgrade --install --set image.tag=${{ github.head_ref }},service.name=api-${{ github.head_ref }},queue.imagery=imagery-${{ github.head_ref }},queue.inference=inference-${{ github.head_ref }}  api-${{ github.head_ref }} ./api-chart
           helm list
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
@@ -150,13 +150,13 @@ jobs:
         uses: 'google-github-actions/deploy-appengine@v0'
         with:
           working_directory: './src/tasks/imagery'
-          version: '${{ github.ref_name }}'
+          version: '${{ github.head_ref }}'
 
       - name: Create Imagery Queue in Dev
         run: |
           gcloud auth configure-docker -q
-          gcloud tasks queues create imagery-${{ github.ref_name }} --location southamerica-east1 --routing-override=service:imagery
-          gcloud tasks queues describe imagery-${{ github.ref_name }}
+          gcloud tasks queues create imagery-${{ github.head_ref }} --location southamerica-east1 --routing-override=service:imagery
+          gcloud tasks queues describe imagery-${{ github.head_ref }}
 
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
@@ -181,13 +181,13 @@ jobs:
         uses: 'google-github-actions/deploy-appengine@v0'
         with:
           working_directory: './src/tasks/inference'
-          version: '${{ github.ref_name }}'
+          version: '${{ github.head_ref }}'
 
       - name: Create Inference Queue in Dev
         run: |
           gcloud auth configure-docker -q
-          gcloud tasks queues create inference-${{ github.ref_name }} --location southamerica-east1 --routing-override=service:inference
-          gcloud tasks queues describe inference-${{ github.ref_name }}
+          gcloud tasks queues create inference-${{ github.head_ref }} --location southamerica-east1 --routing-override=service:inference
+          gcloud tasks queues describe inference-${{ github.head_ref }}
 
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
