@@ -89,7 +89,8 @@ gcloud app logs tail -s inference
 
 ## Run locally
 
-This project needs docker >= 20 and docker-compose >= 1.29.
+* This project needs docker >= 20 and docker-compose >= 1.29.
+* Make sure you have your JSON file with Google Application Credentials in the path `./src/mnt/credentials.json`
 
 ### Build
 
