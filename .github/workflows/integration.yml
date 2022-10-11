@@ -145,9 +145,13 @@ jobs:
         uses: 'google-github-actions/auth@v0'
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
-      - name: Deploy API Dev
+      - id: 'deploy'
+        uses: 'google-github-actions/deploy-appengine@v0'
+
+      - name: Deploy Imagery Dev
         run: |
           gcloud auth configure-docker -q
+          gcloud auth activate-service-account --key-file=$(ls | grep .json)
           gcloud app deploy src/tasks/imagery --version ${{ github.ref_name }}
           gcloud tasks queues create imagery-${{ github.ref_name }} --location southamerica-east1 --routing-override=service:imagery
           gcloud tasks queues describe imagery-${{ github.ref_name }}
@@ -169,9 +173,10 @@ jobs:
         uses: 'google-github-actions/auth@v0'
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
-      - name: Deploy API Dev
+      - name: Deploy Inference Dev
         run: |
           gcloud auth configure-docker -q
+          gcloud auth activate-service-account --key-file=$(ls | grep .json)
           gcloud app deploy src/tasks/inference --version ${{ github.ref_name }}
           gcloud tasks queues create inference-${{ github.ref_name }} --location southamerica-east1 --routing-override=service:inference
           gcloud tasks queues describe inference-${{ github.ref_name }}
