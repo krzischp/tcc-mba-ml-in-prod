@@ -1,4 +1,4 @@
-name: CD4ML
+name: CD4ML - Integration
 run-name: ${{ github.run_id }} - ${{ github.ref_name }}
 on:
   pull_request_target:
