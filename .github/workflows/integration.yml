@@ -1,9 +1,9 @@
 name: CD4ML
 run-name: ${{ github.run_id }} - ${{ github.ref_name }}
 on:
-  push:
-  pull_request:
-    types: [opened, reopened]
+  pull_request_target:
+    types:
+      - opened
     branches:
       - 'main'
 jobs:
