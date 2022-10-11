@@ -34,4 +34,5 @@ jobs:
            pip install flake8
            flake8 .
         continue-on-error: true
-      - run: echo "${{ job.status }}!"
+      - name: 'Status'
+        run: echo "${{ job.status }}!"
