@@ -147,10 +147,11 @@ jobs:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
       - id: 'deploy'
-        name: 'Authenticate to Google Cloud'
+        name: 'Deploy Imagery in dev'
         uses: 'google-github-actions/deploy-appengine@v0'
-        working_directory: './src/tasks/imagery'
-        version: '${{ github.ref_name }}'
+        with:
+          working_directory: './src/tasks/imagery'
+          version: '${{ github.ref_name }}'
 
       - name: Create Imagery Queue in Dev
         run: |
@@ -177,10 +178,11 @@ jobs:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
       - id: 'deploy'
-        name: 'Authenticate to Google Cloud'
+        name: 'Deploy Inference in Dev'
         uses: 'google-github-actions/deploy-appengine@v0'
-        working_directory: './src/tasks/inference'
-        version: '${{ github.ref_name }}'
+        with:
+          working_directory: './src/tasks/inference'
+          version: '${{ github.ref_name }}'
 
       - name: Create Inference Queue in Dev
         run: |
