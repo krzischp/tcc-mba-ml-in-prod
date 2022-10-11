@@ -116,3 +116,6 @@ We didn't integrate these projects here because of the non-inclusion of enough r
 * Monitoring/Validating results and model being deprecated in accuracy
 * Use FastAPI documentation (Swagger)
 * API Security 
+* Reproducibility: Version Control Of Model And Data 
+* One-Click Deploy with CD4ML
+* Deploying a new model is a business decision, rather than a technical decision - repeatable and auditable deployment process

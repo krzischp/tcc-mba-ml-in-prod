@@ -35,7 +35,6 @@ def inference_task():
 
     fn = FashionNetVgg16NoBn()
 
-    # pose network needs to be trained from scratch? i guess?
     for k in fn.state_dict().keys():
         if "conv5_pose" in k and "weight" in k:
             torch.nn.init.xavier_normal_(fn.state_dict()[k])
