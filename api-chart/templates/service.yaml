@@ -2,14 +2,14 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    io.kompose.service: "{{ .Values.service.name }}-{{ .Values.tag }}"
-  name: "{{ .Values.service.name }}-{{ .Values.tag }}"
+    io.kompose.service: "{{ .Values.service.name }}"
+  name: "{{ .Values.service.name }}"
 spec:
   ports:
     - name: "5000"
       port: 5000
       targetPort: 5000
   selector:
-    io.kompose.service: "{{ .Values.service.name }}-{{ .Values.tag }}"
+    io.kompose.service: "{{ .Values.service.name }}"
 status:
   loadBalancer: {}

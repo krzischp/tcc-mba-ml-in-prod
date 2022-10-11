@@ -2,29 +2,29 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    io.kompose.service: "{{ .Values.service.name }}-{{ .Values.tag }}"
-  name: "{{ .Values.service.name }}-{{ .Values.tag }}"
+    io.kompose.service: "{{ .Values.service.name }}"
+  name: "{{ .Values.service.name }}"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      io.kompose.service: "{{ .Values.service.name }}-{{ .Values.tag }}"
+      io.kompose.service: "{{ .Values.service.name }}"
   strategy: {}
   template:
     metadata:
       labels:
         io.kompose.network/network: "true"
-        io.kompose.service: "{{ .Values.service.name }}-{{ .Values.tag }}"
+        io.kompose.service: "{{ .Values.service.name }}"
     spec:
       containers:
         - env:
             - name: API_HOST
-              value: "{{ .Values.service.name }}-{{ .Values.tag }}"
+              value: "{{ .Values.service.name }}"
             - name: QUEUE_IMAGERY
-              value: "imagery-{{ .Values.tag }}"
+              value: "{{ .Values.queue.imagery }}"
             - name: QUEUE_INFERENCE
-              value: "inference-{{ .Values.tag }}"
-          image: "{{ .Values.image.repository }}:{{ .Values.tag | default .Chart.AppVersion }}"
+              value: "{{ .Values.queue.inference }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           name: api
           ports:
             - containerPort: 5000
