@@ -6,47 +6,42 @@ This project is a scalable generic solution to deploy a fashion images classifie
 
 ![Architecture](./diagrams/tcc-architecture.png)
 
-# Project instructions
+# Project Description
 
-## Execute the project locally
+## Tutorial
 
-This project needs docker >= 20 and docker-compose >= 1.29.
+Link: <link>
 
-### Build
+## Kubernetes (k8s) Cluster
 
+### Creating k8s clusters
 ```sh
-make build
+gcloud config set project tcc-lucas-pierre
+gcloud compute zones list | grep us-east1
+gcloud config set compute/region us-east1
+gcloud container clusters create tcc-cluster --project=tcc-lucas-pierre --region=us-east1 --num-nodes=2 --preemptible
+gcloud container clusters get-credentials tcc-cluster --region us-east1
 ```
 
-### Run
-
+### Removing k8s clusters
 ```sh
-make up
+gcloud container clusters delete --region=us-east1 tcc-cluster
 ```
 
-After running this command you will see and URL for Jupyter notebook in the output. If not, you can run `docker-compose logs client` to find it out.
-
-### Test
-
+## AppEngine & Cloud Task queues
+### Deploying AppEngine services & creating Cloud Task Queues
 ```sh
-make test
+cd src/tasks/imagery
+gcloud app deploy
+gcloud tasks queues create imagery
 ```
 
-### Finish
-
 ```sh
-make down
+cd src/tasks/inference
+gcloud app deploy
+gcloud tasks queues create inference
 ```
-
-### Tasks
-
-Open the notebook in the url outputted by the `make up` command. In the notebook you will see a mocked client for the image classifier app.
-
-1. When you make a call to the running classifier app it will filter **BigQuery** to fetch the image ids that match attributes on the payload and store those images with a specific bucket prefix on **Google Cloud Storage**. 
-2. Augmentation can be performed based on augmentation config also present on the request payload
-3. Run model inference on query results from Step 1 or Step 2
-
-## Execute the project on Kubernetes
+## Deploying & Executing
 
 You should create your own Google Cloud account, then you should upload Docker images to your GCP Container Registry.
 
@@ -74,6 +69,49 @@ kubectl get services | grep client
 ```
 Then you can access <EXTERNAL-IP:PORT> in your browser and you're ready to execute the same tasks you executed locally but this time in Google Cloud.
 
+### Debugging
+```sh
+gcloud app logs tail -s imagery
+gcloud app logs tail -s inference
+```
+
+## Run locally
+
+This project needs docker >= 20 and docker-compose >= 1.29.
+
+### Build
+
+```sh
+make build
+```
+
+### Set up
+
+```sh
+make up
+```
+
+After running this command you will see and URL for Jupyter notebook in the output. If not, you can run `docker-compose logs client` to find it out.
+
+### Test
+
+```sh
+make test
+```
+
+### Tear down
+
+```sh
+make down
+```
+
+### Tasks
+
+Open the notebook in the url outputted by the `make up` command. In the notebook you will see a mocked client for the image classifier app.
+
+1. When you make a call to the running classifier app it will filter **BigQuery** to fetch the image ids that match attributes on the payload and store those images with a specific bucket prefix on **Google Cloud Storage**. 
+2. Augmentation can be performed based on augmentation config also present on the request payload
+3. Run model inference on query results from Step 1 or Step 2
 
 # Possible improvements
 
@@ -83,3 +121,4 @@ We didn't integrate these projects here because of the non-inclusion of enough r
 * Use GPU resources to reduce inference time
 * Put credentials on Secrets
 * Monitoring/Validating results and model being deprecated in accuracy
+* Use FastAPI documentation (Swagger)
