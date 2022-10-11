@@ -20,6 +20,10 @@ spec:
         - env:
             - name: API_HOST
               value: "{{ .Values.service.name }}-{{ .Values.tag }}"
+            - name: QUEUE_IMAGERY
+              value: "imagery-{{ .Values.tag }}"
+            - name: QUEUE_INFERENCE
+              value: "inference-{{ .Values.tag }}"
           image: "{{ .Values.image.repository }}:{{ .Values.tag | default .Chart.AppVersion }}"
           name: api
           ports:

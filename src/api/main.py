@@ -6,11 +6,11 @@ from fastapi import FastAPI
 from google.cloud import tasks_v2
 from pydantic import BaseModel
 from starlette.responses import JSONResponse
-
+import os
 PROJECT_ID = "tcc-lucas-pierre"
 LOCATION = "southamerica-east1"
-QUEUE_IMAGERY = "imagery"
-QUEUE_INFERENCE = "inference"
+QUEUE_IMAGERY = os.getenv("QUEUE_IMAGERY", "imagery")
+QUEUE_INFERENCE = os.getenv("QUEUE_INFERENCE", "inference")
 
 client = tasks_v2.CloudTasksClient()
 parent_imagery = client.queue_path(PROJECT_ID, LOCATION, QUEUE_IMAGERY)
@@ -81,7 +81,7 @@ async def imagery(data: ImageryModel):
     task["app_engine_http_request"]["body"] = converted_payload
     response = client.create_task(parent=parent_imagery, task=task)
 
-    return JSONResponse({"task_id": response.name.split("tasks/")[1], "queue": "imagery"})
+    return JSONResponse({"task_id": response.name.split("tasks/")[1], "queue": QUEUE_IMAGERY})
 
 
 @app.post("/predict", status_code=201)
@@ -102,4 +102,4 @@ async def inference(data: InferenceModel):
     task["app_engine_http_request"]["body"] = converted_payload
     response = client.create_task(parent=parent_inference, task=task)
 
-    return JSONResponse({"task_id": response.name.split("tasks/")[1], "queue": "inference"})
+    return JSONResponse({"task_id": response.name.split("tasks/")[1], "queue": QUEUE_INFERENCE})

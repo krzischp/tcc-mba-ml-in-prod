@@ -6,4 +6,6 @@ service:
   name: api
 
 tag: ""
+queue_imagery: imagery
+queue_inference: inference
 
