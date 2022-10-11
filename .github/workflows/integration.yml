@@ -40,6 +40,8 @@ jobs:
         run: |
           gcloud auth configure-docker -q
           docker build ./src/api -t gcr.io/tcc-lucas-pierre/api:${{ github.ref_name }}
+      - name: Publish Docker Image
+        run: |
           docker push gcr.io/tcc-lucas-pierre/api:${{ github.ref_name }}
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
