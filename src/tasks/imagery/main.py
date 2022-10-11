@@ -175,7 +175,7 @@ def run_augmentations(aug_conf: dict, metadata: list[dict], task_id: str):
 
 def upload(result: list, task_id: str, metadata: list[dict]):
     """
-    Uploads metadata and images for every run in s3.\
+    Uploads metadata and images for every run
 
     :param result: list of dict resulted from querying postgres
     :param task_id: gcp path for specific run
