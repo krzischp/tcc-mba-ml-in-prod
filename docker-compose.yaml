@@ -5,6 +5,8 @@ services:
     image: gcr.io/tcc-lucas-pierre/api
     build: ./src/api
     container_name: api
+    volumes:
+      - ./src/mnt:/mnt
     env_file:
       - 'variables.env'
     ports:
@@ -18,6 +20,7 @@ services:
     container_name: client
     volumes:
       - ./src/client/notebooks:/home/jovyan/notebooks
+      - ./src/mnt:/mnt
     ports:
       - 8888:8888
     env_file:

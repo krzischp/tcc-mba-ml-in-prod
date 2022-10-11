@@ -136,4 +136,4 @@ big_query/
 helper/
 README
 README-mvp.txt
-mnt/credentials.json
+src/mnt/credentials.json
