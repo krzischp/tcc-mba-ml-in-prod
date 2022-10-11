@@ -1,0 +1,5 @@
+mlflow:
+  password: mlflow
+  user: mlflow
+  artifact_url: gs://tcc-mlflow
+  database_url: postgresql://mlflow:mlflow@0.0.0.0:3306/mlflow-db
