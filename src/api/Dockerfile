@@ -3,8 +3,6 @@ FROM python:3.7-slim
 COPY /requirements.txt /api/requirements.txt
 
 ENV APP_DIR='/api'
-COPY /tcc-lucas-pierre-7490c66905ca.json $APP_DIR/tcc-lucas-pierre-7490c66905ca.json
-ENV GOOGLE_APPLICATION_CREDENTIALS=$APP_DIR/tcc-lucas-pierre-7490c66905ca.json
 WORKDIR $APP_DIR
 
 RUN pip install --no-cache-dir --upgrade pip && \
