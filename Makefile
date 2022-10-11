@@ -5,6 +5,7 @@ build:
 
 up:
 	docker-compose up --detach client
+	docker-compose up mlflow
 	docker-compose logs client
 
 down:

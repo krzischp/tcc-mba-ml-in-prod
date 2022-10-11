@@ -18,8 +18,26 @@ spec:
     spec:
       containers:
         - env:
-          - name: MLFLOW_S3_ENDPOINT_URL
-            value: "http://minio:9000"
+            - name: MLFLOW_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  key: MLFLOW_PASSWORD
+                  name: variables-env
+            - name: MLFLOW_USER
+              valueFrom:
+                configMapKeyRef:
+                  key: MLFLOW_USER
+                  name: variables-env
+            - name: MLFLOW_ARTIFACT_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: MLFLOW_ARTIFACT_URL
+                  name: variables-env
+            - name: MLFLOW_DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: MLFLOW_DATABASE_URL
+                  name: variables-env
           image: gcr.io/tcc-lucas-pierre/mlflow
           name: mlflow
           resources: {}

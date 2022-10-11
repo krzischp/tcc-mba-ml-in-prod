@@ -1,6 +1,10 @@
 apiVersion: v1
 data:
   API_HOST: api
+  MLFLOW_PASSWORD: mlflow
+  MLFLOW_USER: mlflow
+  MLFLOW_ARTIFACT_URL: gs://tcc-mlflow
+  MLFLOW_DATABASE_URL: postgresql:///mlflow-db?host=/cloudsql/tcc-lucas-pierre:southamerica-east1:mlflow&user=mlflow&password=mlflow&sslmode=disable
 kind: ConfigMap
 metadata:
   labels:
