@@ -125,7 +125,7 @@ jobs:
       - name: Deploy API Dev
         run: |
           gcloud auth configure-docker -q
-          kubectl apply -f k8s/api-deployment.yaml --image=gcr.io/tcc-lucas-pierre/api:${{ github.ref_name }}
+          kubectl apply -f k8s/api-deployment.yaml --image=gcr.io/tcc-lucas-pierre/api:${{ github.ref_name }} --metadata.name=api-${{ github.ref_name }}
           kubectl apply -f k8s/api-service.yaml
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
