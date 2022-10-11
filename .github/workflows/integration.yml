@@ -1,6 +1,7 @@
 name: CD4ML
 run-name: ${{ github.run_id }} - ${{ github.ref_name }}
 on:
+  push:
   pull_request_target:
     types:
       - opened
