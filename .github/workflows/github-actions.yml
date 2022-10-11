@@ -1,8 +1,11 @@
 name: CD4ML
 run-name: ${{ github.ref }}
 on:
+  push:
   pull_request:
     types: [opened, reopened]
+    branches:
+      - 'main'
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
