@@ -145,13 +145,19 @@ jobs:
         uses: 'google-github-actions/auth@v0'
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
-      - name: Deploy Imagery Dev
+
+      - id: 'deploy'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/deploy-appengine@v0'
+        working_directory: './src/tasks/imagery'
+        version: '${{ github.ref_name }}'
+
+      - name: Create Imagery Queue in Dev
         run: |
           gcloud auth configure-docker -q
-          gcloud auth activate-service-account --key-file=$(ls | grep .json)
-          gcloud app deploy src/tasks/imagery --version ${{ github.ref_name }}
           gcloud tasks queues create imagery-${{ github.ref_name }} --location southamerica-east1 --routing-override=service:imagery
           gcloud tasks queues describe imagery-${{ github.ref_name }}
+
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
   DeployInferenceDev:
@@ -169,13 +175,21 @@ jobs:
         uses: 'google-github-actions/auth@v0'
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
-      - name: Deploy Inference Dev
+
+      - id: 'deploy'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/deploy-appengine@v0'
+        working_directory: './src/tasks/inference'
+        version: '${{ github.ref_name }}'
+
+      - name: Create Inference Queue in Dev
         run: |
           gcloud auth configure-docker -q
-          gcloud auth activate-service-account --key-file=$(ls | grep .json)
-          gcloud app deploy src/tasks/inference --version ${{ github.ref_name }}
           gcloud tasks queues create inference-${{ github.ref_name }} --location southamerica-east1 --routing-override=service:inference
           gcloud tasks queues describe inference-${{ github.ref_name }}
+
+      - name: 'Job Status!'
+        run: echo "${{ job.status }}!"
 
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
