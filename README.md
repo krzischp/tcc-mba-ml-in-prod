@@ -71,12 +71,12 @@ Then you can access <EXTERNAL-IP:PORT> in your browser and you're ready to execu
 
 ### Service Endpoints
 
-* **POST** /imagery
+* **POST** /filter
 ```sh
 blablabla
 ```
 
-* **POST** /inference
+* **POST** /predict
 ```sh
 blablabla
 ```
@@ -104,12 +104,6 @@ make up
 ```
 
 After running this command you will see and URL for Jupyter notebook in the output. If not, you can run `docker-compose logs client` to find it out.
-
-### Test
-
-```sh
-make test
-```
 
 ### Tear down
 
