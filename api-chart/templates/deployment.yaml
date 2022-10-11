@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: "{{ .Values.service.name }}-{{ .Values.tag }}"
+  name: "{{ .Values.service.name }}-{{ .Values.tag }}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: "{{ .Values.service.name }}-{{ .Values.tag }}"
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.network/network: "true"
+        io.kompose.service: "{{ .Values.service.name }}-{{ .Values.tag }}"
+    spec:
+      containers:
+        - env:
+            - name: API_HOST
+              value: "{{ .Values.service.name }}-{{ .Values.tag }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.tag | default .Chart.AppVersion }}"
+          name: api
+          ports:
+            - containerPort: 5000
+          resources: {}
+      restartPolicy: Always
+status: {}

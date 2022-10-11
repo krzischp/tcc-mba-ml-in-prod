@@ -1,0 +1,9 @@
+image:
+  repository: gcr.io/tcc-lucas-pierre/api
+  pullPolicy: IfNotPresent
+
+service:
+  name: api
+
+tag: ""
+

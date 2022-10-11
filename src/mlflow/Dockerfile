@@ -10,5 +10,6 @@ ENV MLFLOW_PASSWORD ${MLFLOW_PASSWORD}
 RUN apt update && apt install -y wget
 RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.386 -O cloud_sql_proxy
 RUN chmod +x cloud_sql_proxy
+RUN chmod +x init.sh
 
-ENTRYPOINT ./cloud_sql_proxy -instances=${INSTANCE_CONNECTION_NAME}=tcp:3306 -credential_file=${GOOGLE_APPLICATION_CREDENTIALS} && mlflow server -h 0.0.0.0 -p 5000 --default-artifact-root ${MLFLOW_ARTIFACT_URL} --backend-store-uri ${MLFLOW_DATABASE_URL}
+ENTRYPOINT ["./init.sh"]
