@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: mlflow
+  name: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: mlflow
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.network/network: "true"
+        io.kompose.service: mlflow
+    spec:
+      containers:
+        - env:
+          - name: MLFLOW_S3_ENDPOINT_URL
+            value: "http://minio:9000"
+          image: gcr.io/tcc-lucas-pierre/mlflow
+          name: mlflow
+          resources: {}
+      restartPolicy: Always
+status: {}
