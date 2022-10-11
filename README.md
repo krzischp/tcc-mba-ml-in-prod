@@ -69,18 +69,6 @@ kubectl get services | grep client
 ```
 Then you can access <EXTERNAL-IP:PORT> in your browser and you're ready to execute the same tasks you executed locally but this time in Google Cloud.
 
-### Service Endpoints
-
-* **POST** /filter
-```sh
-blablabla
-```
-
-* **POST** /predict
-```sh
-blablabla
-```
-
 ### Debugging
 ```sh
 gcloud app logs tail -s imagery
