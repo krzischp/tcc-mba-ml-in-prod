@@ -33,7 +33,12 @@ jobs:
       - name: Lint with flake8
         run: |
            pip install flake8
-           flake8 .
+           flake8 --max-line-length=100 ./src/api/main.py
         continue-on-error: true
+      - name: Build Docker Image
+        run: |
+          docker build ./src/api -t api
+          docker tag api gcr.io/tcc-lucas-pierre/api:${{ github.run_id }} - ${{ github.ref_name }}
+          docker push gcr.io/tcc-lucas-pierre/api:${{ github.run_id }} - ${{ github.ref_name }}
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
