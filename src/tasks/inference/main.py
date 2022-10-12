@@ -103,7 +103,7 @@ def list_blobs_with_prefix(bucket_name, prefix, images_filepaths, delimiter=None
 
     # Note: The call returns a response only when the iterator is consumed.
     for blob in blobs:
-        if ".jpg" in blob.name:
+        if ".jpg" in blob.name and "augmentation" in blob.name:
             images_filepaths.append(blob.name)
     return images_filepaths
 
