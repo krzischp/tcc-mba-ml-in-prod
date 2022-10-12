@@ -6,6 +6,7 @@ import json
 import logging
 import os
 
+import mlflow
 import torch
 from flask import Flask, request
 from google.cloud import storage
@@ -19,6 +20,8 @@ app = Flask(__name__)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+mlflow.set_tracking_uri("http://35.231.130.51:5000")
+
 
 @app.route("/")
 def hello():
@@ -29,6 +32,7 @@ def hello():
 @app.route("/inference", methods=["POST"])
 def inference_task():
     """Entrypoint for the inference Cloud Task."""
+    mlflow.pytorch.autolog()
     payload = request.get_json()
     task_id = payload["task_id"]
     logger.info("Running inference for task_id: %s", task_id)
@@ -53,16 +57,22 @@ def inference_task():
     images_dataset = ImagesDataset(images_filepaths=images_filepaths)
     loader = DataLoader(images_dataset)
     predicted_labels = []
-    with torch.no_grad():
-        for image, image_name in loader:
-            output = fn(image)
-            predicted_labels.append(
-                {
+    with mlflow.start_run() as run:
+        artifact_uri = run.info.artifact_uri
+        with torch.no_grad():
+            for image, image_name in loader:
+                output = fn(image)
+                predicted_label = {
                     "image_name": image_name,
                     "massive_attr": output[0].tolist(),
                     "categories": output[1].tolist(),
+                    "category_prediction": output[1].argmax(),
                 }
-            )
+                predicted_labels.append(predicted_label)
+                mlflow.log_dict(predicted_label, "inferences.json")
+                mlflow.artifacts.load_dict(artifact_uri + "/inferences.json")
+                mlflow.log_image(image, image_name)
+                mlflow.artifacts.load_image(artifact_uri + "/" + image_name)
     upload_inferences(result=predicted_labels, task_id=task_id)
 
     return {"run_id": task_id}
@@ -97,13 +107,12 @@ def list_blobs_with_prefix(bucket_name, prefix, images_filepaths, delimiter=None
     """
 
     storage_client = storage.Client()
-
-    # Note: Client.list_blobs requires at least package version 1.17.0.
     blobs = storage_client.list_blobs(bucket_name, prefix=prefix, delimiter=delimiter)
 
-    # Note: The call returns a response only when the iterator is consumed.
+    # v1: without augmentation
+    # v2: with augmentation
     for blob in blobs:
-        if ".jpg" in blob.name and "augmentation" in blob.name:
+        if ".jpg" in blob.name and "augmentation" not in blob.name:
             images_filepaths.append(blob.name)
     return images_filepaths
 
@@ -120,7 +129,7 @@ def upload_inferences(result: list[dict], task_id: str) -> None:
 
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(BUCKET_NAME)
-    predictions_path = f"tasks/{task_id}/inferences.json"
+    predictions_path = f"tasks/{task_id}/inferences_metadata.json"
     blob = bucket.blob(predictions_path)
     logger.info("Uploading inferences for task_id: %s", task_id)
     blob.upload_from_string(json.dumps(result))

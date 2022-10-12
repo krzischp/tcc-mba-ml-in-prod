@@ -20,14 +20,23 @@ spec:
         - env:
             - name: API_HOST
               value: "{{ .Values.service.name }}"
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/mnt/credentials.json"
             - name: QUEUE_IMAGERY
               value: "{{ .Values.queue.imagery }}"
             - name: QUEUE_INFERENCE
               value: "{{ .Values.queue.inference }}"
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           name: api
+          volumeMounts:
+            - name: credentials
+              mountPath: /mnt
           ports:
             - containerPort: 5000
           resources: {}
+      volumes:
+        - name: credentials
+          secret:
+            secretName: credentials
       restartPolicy: Always
 status: {}
