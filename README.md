@@ -119,3 +119,7 @@ We didn't integrate these projects here because of the non-inclusion of enough r
 * Reproducibility: Version Control Of Model And Data 
 * One-Click Deploy with CD4ML
 * Deploying a new model is a business decision, rather than a technical decision - repeatable and auditable deployment process
+* ML Traning Orchestration Platform
+* Model Monitoring and Observability - EFK Stack (Elasticsearch, Kibana, FluentD)
+  * To close the data feedback loop, we can log events in production to collect data about how our model is performing against real data.
+  * This data can later be curated and labeled to improve the dataset used during training. This allows us to continuously improve our models in production.

@@ -148,7 +148,6 @@ jobs:
         with:
           working_directory: './src/tasks/imagery'
           version: 'v1'
-
   DeployInference:
     runs-on: ubuntu-latest
     needs: [BuildAPI, BuildImagery, BuildInference]
@@ -171,9 +170,6 @@ jobs:
         with:
           working_directory: './src/tasks/inference'
           version: 'v1'
-
-      - name: 'Job Status!'
-        run: echo "${{ job.status }}!"
 
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
