@@ -79,6 +79,8 @@ def landmark_predictions_to_roipool_boxes(landmark_loc, bbs=0):
 
 class Flatten(nn.Module):
     def forward(self, input):
+
+
         return input.view(input.size(0), -1)
 
 
