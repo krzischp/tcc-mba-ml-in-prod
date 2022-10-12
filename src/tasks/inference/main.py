@@ -32,7 +32,6 @@ def hello():
 @app.route("/inference", methods=["POST"])
 def inference_task():
     """Entrypoint for the inference Cloud Task."""
-    mlflow.pytorch.autolog()
     payload = request.get_json()
     task_id = payload["task_id"]
     logger.info("Running inference for task_id: %s", task_id)
