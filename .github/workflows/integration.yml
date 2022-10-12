@@ -157,6 +157,7 @@ jobs:
           gcloud auth configure-docker -q
           gcloud tasks queues create imagery-${{ github.head_ref }} --location southamerica-east1 --routing-override=service:imagery
           gcloud tasks queues describe imagery-${{ github.head_ref }}
+        continue-on-error: true
 
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
@@ -188,6 +189,7 @@ jobs:
           gcloud auth configure-docker -q
           gcloud tasks queues create inference-${{ github.head_ref }} --location southamerica-east1 --routing-override=service:inference
           gcloud tasks queues describe inference-${{ github.head_ref }}
+        continue-on-error: true
 
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
