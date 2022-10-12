@@ -20,6 +20,8 @@ spec:
         - env:
             - name: MLFLOW_PASSWORD
               value: "{{ .Values.mlflow.password }}"
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/mnt/credentials.json"
             - name: MLFLOW_USER
               value: "{{ .Values.mlflow.user }}"
             - name: MLFLOW_ARTIFACT_URL
@@ -28,6 +30,13 @@ spec:
               value: "{{ .Values.mlflow.database_url }}"
           image: gcr.io/tcc-lucas-pierre/mlflow
           name: mlflow
+          volumeMounts:
+            - name: credentials
+              mountPath: /mnt
           resources: {}
+      volumes:
+        - name: credentials
+          secret:
+            secretName: credentials
       restartPolicy: Always
 status: {}

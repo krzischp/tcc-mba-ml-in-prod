@@ -125,7 +125,7 @@ jobs:
         run: |
           gcloud auth configure-docker -q
           gcloud container clusters get-credentials tcc-cluster --region us-east1
-          helm upgrade --install --set image.tag=${{ github.head_ref }},service.name=api-${{ github.head_ref }},queue.imagery=imagery-${{ github.head_ref }},queue.inference=inference-${{ github.head_ref }}  api-${{ github.head_ref }} ./api-chart
+          helm upgrade --install --set image.tag=${{ github.head_ref }},service.name=api-${{ github.head_ref }},queue.imagery=imagery-${{ github.head_ref }},queue.inference=inference-${{ github.head_ref }}  api-${{ github.head_ref }} ./charts/api
           helm list
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"

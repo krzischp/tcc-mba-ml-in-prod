@@ -7,8 +7,8 @@ metadata:
 spec:
   ports:
     - name: "5000"
-      port: 5000
-      targetPort: 5000
+      port: 5000 # client
+      targetPort: 5000 # exposes
   selector:
     io.kompose.service: mlflow
 status:

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow-lb
+spec:
+  type: LoadBalancer
+  selector:
+    io.kompose.service: mlflow
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000

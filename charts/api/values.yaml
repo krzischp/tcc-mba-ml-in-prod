@@ -1,7 +1,7 @@
 image:
   repository: gcr.io/tcc-lucas-pierre/api
   pullPolicy: IfNotPresent
-  tag: ""
+  tag: latest
 
 service:
   name: api

@@ -12,4 +12,4 @@ RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.386 -O cloud_sql_p
 RUN chmod +x cloud_sql_proxy
 RUN chmod +x init.sh
 
-ENTRYPOINT ["./init.sh"]
+ENTRYPOINT ["bash", "./init.sh"]

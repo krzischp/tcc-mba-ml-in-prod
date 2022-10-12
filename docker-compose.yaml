@@ -25,10 +25,6 @@ services:
       - 8888:8888
     env_file:
       - 'variables.env'
-    links:
-      - api:api
-    depends_on:
-      - api
     networks:
       - network
 
