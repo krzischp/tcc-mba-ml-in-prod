@@ -4,6 +4,7 @@
 def test_filter_valid_request(client):
     """Body of request does not pass pydantic validation, should be bad request"""
     body = {
+        "queue": "imagery",
         "gender": "Men",
         "foo": 3213,
         "bar": "JA",
