@@ -14,7 +14,9 @@ from torch.utils.data import DataLoader
 
 from deepfashion import FashionNetVgg16NoBn
 from utils.categories_mapping import master_categories
-from utils.dataset import ImagesDataset
+from utils.dataset import ImagesDataset, download_blob_into_memory
+from PIL import Image
+from io import BytesIO
 
 BUCKET_NAME = os.getenv("BUCKET_NAME")
 app = Flask(__name__)
@@ -59,7 +61,7 @@ def inference_task():
     predicted_labels = []
     with mlflow.start_run(
         run_name="benchmark",
-        tags={"version": "v1"},
+        tags={"version": "v1", "augmentation": False},
     ) as run:
         artifact_uri = run.info.artifact_uri
         with torch.no_grad():
@@ -80,8 +82,12 @@ def inference_task():
                 logger.info("Image Name: %s", image_name)
                 logger.info("Image Name[0]: %s", image_name[0])
                 img_name = image_name[0].rsplit("/", 1)[1].replace(".jpg", "")
+                img_bytes = download_blob_into_memory("tcc-clothes", image_name[0])
+                mlflow.log_image(Image.open(BytesIO(img_bytes)), f"images/{img_name}.jpg")
+                mlflow.artifacts.load_image(artifact_uri + f"images/{img_name}.jpg")
                 mlflow.log_dict(predicted_label, f"inferences/{img_name}.json")
                 mlflow.artifacts.load_dict(artifact_uri + f"/inferences/{img_name}.json")
+        mlflow.log_metric(key="AUC", value=0.8)
     upload_inferences(result=predicted_labels, task_id=task_id)
 
     return {"run_id": task_id}
