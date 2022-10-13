@@ -1,5 +1,5 @@
 runtime: python37
-service: imagery
+service: imagery-iti-v2
 instance_class: F4
 env_variables:
   BUCKET_NAME: "tcc-clothes"
