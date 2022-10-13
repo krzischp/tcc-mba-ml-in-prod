@@ -79,7 +79,7 @@ def inference_task():
                     "categories": categories_list,
                     "category_prediction_index": category_prediction_index,
                     "category_prediction": category_prediction,
-                    "mlflow_run_id": mlflow_run_id
+                    "mlflow_run_id": mlflow_run_id,
                 }
                 predicted_labels.append(predicted_label)
                 img_name = image_name[0].rsplit("/", 1)[1].replace(".jpg", "")

@@ -7,6 +7,12 @@ on:
       - synchronize
     branches:
       - 'main'
+env:
+  API_HOST: 34.73.236.32
+  MLFLOW_HOST: 35.231.130.51
+  PROJECT_ID: tcc-lucas-pierre
+  BUCKET_NAME: tcc-clothes
+
 jobs:
   BuildAPI:
     runs-on: ubuntu-latest
