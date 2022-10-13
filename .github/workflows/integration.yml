@@ -221,7 +221,6 @@ jobs:
           pip install --upgrade pip
           pip install -r src/ml_pipeline/requirements.txt
           python src/ml_pipeline/main.py ${{ github.head_ref }} ${AUC_THRESHOLD}
-        continue-on-error: true
 
       - name: 'Job Status!'
         run: echo "${{ job.status }}!"
