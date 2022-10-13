@@ -120,6 +120,9 @@ if __name__ == "__main__":
     print(f"AUC Candidate branch {branch_name}: {auc_candidate}")
     print(f"AUC Threshold: {auc_threshold}")
 
-    if auc_prod < auc_candidate or auc_candidate < auc_threshold:
+    if auc_prod > auc_candidate or auc_threshold > auc_candidate:
         print("Requisites for new model were not match!")
         sys.exit(1)
+
+    print("Requisites for new model were match!")
+    print("Check MLFlow http://35.231.130.51:5000/#/ for more information about the runs")
