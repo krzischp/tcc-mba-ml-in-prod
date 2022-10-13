@@ -138,7 +138,7 @@ def upload_inferences(result: list[dict], task_id: str) -> None:
 
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(BUCKET_NAME)
-    predictions_path = f"tasks/{task_id}/inferences_metadata.json"
+    predictions_path = f"tasks/{task_id}/inferences.json"
     blob = bucket.blob(predictions_path)
     logger.info("Uploading inferences for task_id: %s", task_id)
     blob.upload_from_string(json.dumps(result))
