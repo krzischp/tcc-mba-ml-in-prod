@@ -26,9 +26,14 @@ def test_filter_invalid_request(client):
     assert response.json() == {
         "detail": [
             {
+                "loc": ["body", "queue"],
+                "msg": "field required",
+                "type": "value_error.missing",
+            },
+            {
                 "loc": ["body", "gender"],
                 "msg": "field required",
                 "type": "value_error.missing",
-            }
+            },
         ]
     }
