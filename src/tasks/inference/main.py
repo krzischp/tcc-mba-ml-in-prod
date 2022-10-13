@@ -65,6 +65,7 @@ def inference_task():
         tags={"version": "v1", "augmentation": "no", "augmentation_config": "n/a"},
     ) as run:
         artifact_uri = run.info.artifact_uri
+        mlflow_run_id = run.info.run_id
         with torch.no_grad():
             for image, image_name in loader:
                 output = fn(image)
@@ -78,6 +79,7 @@ def inference_task():
                     "categories": categories_list,
                     "category_prediction_index": category_prediction_index,
                     "category_prediction": category_prediction,
+                    "mlflow_run_id": mlflow_run_id
                 }
                 predicted_labels.append(predicted_label)
                 img_name = image_name[0].rsplit("/", 1)[1].replace(".jpg", "")
@@ -90,7 +92,7 @@ def inference_task():
                 mlflow.artifacts.load_dict(
                     artifact_uri + f"/inferences/{img_name}.json"
                 )
-        mlflow.log_metric(key="AUC", value=0.3)
+        mlflow.log_metric(key="AUC", value=0.5)
     upload_inferences(result=predicted_labels, task_id=task_id)
 
     return {"run_id": task_id}
