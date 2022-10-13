@@ -91,7 +91,7 @@ def run_inference(run_id: str, queue: str):
     for idx, predict in enumerate(predictions, 1):
         print(
             f'Image number {idx}'
-            f'\nmlflow_run_id: {predict["mlflow_run_id"]} '
+            f'mlflow_run_id: {predict["mlflow_run_id"]} '
             f'image_id: {predict["image_name"][0].rsplit("/", 1)[1]} '
         )
         mlflow_run_id = predict["mlflow_run_id"]
