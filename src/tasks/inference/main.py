@@ -92,7 +92,7 @@ def inference_task():
                 mlflow.artifacts.load_dict(
                     artifact_uri + f"/inferences/{img_name}.json"
                 )
-        mlflow.log_metric(key="AUC", value=0.5)
+        mlflow.log_metric(key="AUC", value=0.7)
     upload_inferences(result=predicted_labels, task_id=task_id)
 
     return {"run_id": task_id}
