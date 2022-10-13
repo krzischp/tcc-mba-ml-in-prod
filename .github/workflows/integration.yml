@@ -201,7 +201,7 @@ jobs:
         run: echo "${{ job.status }}!"
   MLPipeline:
     runs-on: ubuntu-latest
-    needs: [BuildAPI, BuildImagery, BuildInference]
+    needs: [DeployAPIDev, DeployImageryDev, DeployInferenceDev]
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
