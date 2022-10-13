@@ -12,6 +12,7 @@ env:
   MLFLOW_HOST: 35.231.130.51
   PROJECT_ID: tcc-lucas-pierre
   BUCKET_NAME: tcc-clothes
+  AUC_THRESHOLD: 0.7
 
 jobs:
   BuildAPI:
@@ -219,7 +220,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r src/ml_pipeline/requirements.txt
-          python src/ml_pipeline/main.py ${{ github.head_ref }} 0.6
+          python src/ml_pipeline/main.py ${{ github.head_ref }} ${AUC_THRESHOLD}
         continue-on-error: true
 
       - name: 'Job Status!'
