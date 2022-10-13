@@ -61,7 +61,7 @@ def inference_task():
     predicted_labels = []
     with mlflow.start_run(
         run_name="benchmark",
-        tags={"version": "v1", "augmentation": False},
+        tags={"version": "v1", "augmentation": "no"},
     ) as run:
         artifact_uri = run.info.artifact_uri
         with torch.no_grad():
