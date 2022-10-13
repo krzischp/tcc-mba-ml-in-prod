@@ -161,7 +161,7 @@ jobs:
       - name: Create Imagery Queue in Dev
         run: |
           gcloud auth configure-docker -q
-          gcloud tasks queues create imagery-${{ github.head_ref }} --location southamerica-east1 --routing-override=service:imagery
+          gcloud tasks queues create imagery-${{ github.head_ref }} --location southamerica-east1 --routing-override=service:imagery-${{ github.head_ref }}
           gcloud tasks queues describe imagery-${{ github.head_ref }}
         continue-on-error: true
 
@@ -193,8 +193,33 @@ jobs:
       - name: Create Inference Queue in Dev
         run: |
           gcloud auth configure-docker -q
-          gcloud tasks queues create inference-${{ github.head_ref }} --location southamerica-east1 --routing-override=service:inference
+          gcloud tasks queues create inference-${{ github.head_ref }} --location southamerica-east1 --routing-override=service:inference-${{ github.head_ref }}
           gcloud tasks queues describe inference-${{ github.head_ref }}
+        continue-on-error: true
+
+      - name: 'Job Status!'
+        run: echo "${{ job.status }}!"
+  MLPipeline:
+    runs-on: ubuntu-latest
+    needs: [BuildAPI, BuildImagery, BuildInference]
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0'
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+      - name: Run experiments for models
+        run: |
+          pip install --upgrade pip
+          pip install -r src/ml_pipeline/requirements.txt
+          python src/ml_pipeline/main.py ${{ github.head_ref }} 0.6
         continue-on-error: true
 
       - name: 'Job Status!'
