@@ -1,50 +1,52 @@
-"Anorak"
-"Blazer"
-"Blouse"
-"Bomber"
-"Button-Down"
-"Cardigan"
-"Flannel"
-"Halter"
-"Henley"
-"Hoodie"
-"Jacket"
-"Jersey"
-"Parka"
-"Peacoat"
-"Poncho"
-"Sweater"
-"Tank"
-"Tee"
-"Top"
-"Turtleneck"
-"Capris"
-"Chinos"
-"Culottes"
-"Cutoffs"
-"Gauchos"
-"Jeans"
-"Jeggings"
-"Jodhpurs"
-"Joggers"
-"Leggings"
-"Sarong"
-"Shorts"
-"Skirt"
-"Sweatpants"
-"Sweatshorts"
-"Trunks"
-"Caftan"
-"Cape"
-"Coat"
-"Coverup"
-"Dress"
-"Jumpsuit"
-"Kaftan"
-"Kimono"
-"Nightdress"
-"Onesie"
-"Robe"
-"Romper"
-"Shirtdress"
-"Sundress"
+master_categories = [
+    "Anorak",
+    "Blazer",
+    "Blouse",
+    "Bomber",
+    "Button-Down",
+    "Caftan",
+    "Cape",
+    "Capris",
+    "Cardigan",
+    "Chinos",
+    "Coat",
+    "Coverup",
+    "Culottes",
+    "Cutoffs",
+    "Dress",
+    "Flannel",
+    "Gauchos",
+    "Halter",
+    "Henley",
+    "Hoodie",
+    "Jacket",
+    "Jeans",
+    "Jeggings",
+    "Jersey",
+    "Jodhpurs",
+    "Joggers",
+    "Jumpsuit",
+    "Kaftan",
+    "Kimono",
+    "Leggings",
+    "Nightdress",
+    "Onesie",
+    "Parka",
+    "Peacoat",
+    "Poncho",
+    "Robe",
+    "Romper",
+    "Sarong",
+    "Shirtdress",
+    "Shorts",
+    "Skirt",
+    "Sundress",
+    "Sweater",
+    "Sweatpants",
+    "Sweatshorts",
+    "Tank",
+    "Tee",
+    "Top",
+    "Trunks",
+    "Turtleneck",
+]

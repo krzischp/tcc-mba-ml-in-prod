@@ -13,6 +13,7 @@ from google.cloud import storage
 from torch.utils.data import DataLoader
 
 from deepfashion import FashionNetVgg16NoBn
+from utils.categories_mapping import master_categories
 from utils.dataset import ImagesDataset
 
 BUCKET_NAME = os.getenv("BUCKET_NAME")
@@ -56,22 +57,31 @@ def inference_task():
     images_dataset = ImagesDataset(images_filepaths=images_filepaths)
     loader = DataLoader(images_dataset)
     predicted_labels = []
-    with mlflow.start_run() as run:
+    with mlflow.start_run(
+        run_name="benchmark",
+        tags={"version": "v1"},
+    ) as run:
         artifact_uri = run.info.artifact_uri
         with torch.no_grad():
             for image, image_name in loader:
                 output = fn(image)
+                categories_list = output[1].tolist()[0]
+                max_pred = max(categories_list)
+                category_prediction_index = categories_list.index(max_pred)
+                category_prediction = master_categories[category_prediction_index]
                 predicted_label = {
                     "image_name": image_name,
-                    "massive_attr": output[0].tolist(),
-                    "categories": output[1].tolist(),
-                    "category_prediction": output[1].argmax(),
+                    "massive_attr": output[0].tolist()[0],
+                    "categories": categories_list,
+                    "category_prediction_index": category_prediction_index,
+                    "category_prediction": category_prediction,
                 }
                 predicted_labels.append(predicted_label)
-                mlflow.log_dict(predicted_label, "inferences.json")
-                mlflow.artifacts.load_dict(artifact_uri + "/inferences.json")
-                mlflow.log_image(image, image_name)
-                mlflow.artifacts.load_image(artifact_uri + "/" + image_name)
+                logger.info("Image Name: %s", image_name)
+                logger.info("Image Name[0]: %s", image_name[0])
+                img_name = image_name[0].rsplit("/", 1)[1].replace(".jpg", "")
+                mlflow.log_dict(predicted_label, f"inferences/{img_name}.json")
+                mlflow.artifacts.load_dict(artifact_uri + f"/inferences/{img_name}.json")
     upload_inferences(result=predicted_labels, task_id=task_id)
 
     return {"run_id": task_id}
