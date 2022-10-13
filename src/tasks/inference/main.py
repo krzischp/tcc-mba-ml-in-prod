@@ -60,9 +60,9 @@ def inference_task():
     loader = DataLoader(images_dataset)
     predicted_labels = []
     with mlflow.start_run(
-        run_name="MBA FashionNet V2",
-        description="MBA FashionNet V2 - Category Classification",
-        tags={"version": "v2", "augmentation": "yes", "augmentation_config": '"albumentation": {"input_image": {"width": 60, "height": 80}, "cropping": {"height": {"min": 10, "max": 70}}, "resize": {"width": 256, "height": 256}}}'}
+        run_name="MBA FashionNet V3",
+        description="MBA FashionNet V3 - Category Classification",
+        tags={"version": "v3", "augmentation": "yes", "augmentation_config": '"albumentation": {"input_image": {"width": 60, "height": 80}, "cropping": {"height": {"min": 10, "max": 70}}, "resize": {"width": 256, "height": 256}}}'}
     ) as run:
         artifact_uri = run.info.artifact_uri
         mlflow_run_id = run.info.run_id
@@ -92,7 +92,7 @@ def inference_task():
                 mlflow.artifacts.load_dict(
                     artifact_uri + f"/inferences/{img_name}.json"
                 )
-        mlflow.log_metric(key="AUC", value=0.71)
+        mlflow.log_metric(key="AUC", value=0.68)
     upload_inferences(result=predicted_labels, task_id=task_id)
 
     return {"run_id": task_id}
