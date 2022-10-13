@@ -9,7 +9,7 @@ on:
       - 'main'
 env:
   API_HOST: 34.73.236.32
-  MLFLOW_HOST: 35.231.130.51
+  MLFLOW_HOST: 35.229.28.6
   PROJECT_ID: tcc-lucas-pierre
   BUCKET_NAME: tcc-clothes
   AUC_THRESHOLD: 0.7
