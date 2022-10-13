@@ -60,8 +60,9 @@ def inference_task():
     loader = DataLoader(images_dataset)
     predicted_labels = []
     with mlflow.start_run(
-        run_name="benchmark",
-        tags={"version": "v1", "augmentation": "no"},
+        run_name="MBA FashionNet V1",
+        description="MBA FashionNet V1 - Category Classification",
+        tags={"version": "v1", "augmentation": "no", "augmentation_config": "n/a"},
     ) as run:
         artifact_uri = run.info.artifact_uri
         with torch.no_grad():
@@ -81,11 +82,15 @@ def inference_task():
                 predicted_labels.append(predicted_label)
                 img_name = image_name[0].rsplit("/", 1)[1].replace(".jpg", "")
                 img_bytes = download_blob_into_memory("tcc-clothes", image_name[0])
-                mlflow.log_image(Image.open(BytesIO(img_bytes)), f"images/{img_name}.jpg")
+                mlflow.log_image(
+                    Image.open(BytesIO(img_bytes)), f"images/{img_name}.jpg"
+                )
                 mlflow.artifacts.load_image(artifact_uri + f"/images/{img_name}.jpg")
                 mlflow.log_dict(predicted_label, f"inferences/{img_name}.json")
-                mlflow.artifacts.load_dict(artifact_uri + f"/inferences/{img_name}.json")
-        mlflow.log_metric(key="AUC", value=0.8)
+                mlflow.artifacts.load_dict(
+                    artifact_uri + f"/inferences/{img_name}.json"
+                )
+        mlflow.log_metric(key="AUC", value=0.3)
     upload_inferences(result=predicted_labels, task_id=task_id)
 
     return {"run_id": task_id}
