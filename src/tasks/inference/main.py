@@ -79,12 +79,10 @@ def inference_task():
                     "category_prediction": category_prediction,
                 }
                 predicted_labels.append(predicted_label)
-                logger.info("Image Name: %s", image_name)
-                logger.info("Image Name[0]: %s", image_name[0])
                 img_name = image_name[0].rsplit("/", 1)[1].replace(".jpg", "")
                 img_bytes = download_blob_into_memory("tcc-clothes", image_name[0])
                 mlflow.log_image(Image.open(BytesIO(img_bytes)), f"images/{img_name}.jpg")
-                mlflow.artifacts.load_image(artifact_uri + f"images/{img_name}.jpg")
+                mlflow.artifacts.load_image(artifact_uri + f"/images/{img_name}.jpg")
                 mlflow.log_dict(predicted_label, f"inferences/{img_name}.json")
                 mlflow.artifacts.load_dict(artifact_uri + f"/inferences/{img_name}.json")
         mlflow.log_metric(key="AUC", value=0.8)
