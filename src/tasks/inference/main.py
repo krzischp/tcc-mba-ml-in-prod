@@ -23,7 +23,7 @@ app = Flask(__name__)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-mlflow.set_tracking_uri("http://35.231.130.51:5000")
+mlflow.set_tracking_uri("http://35.229.28.6:5000")
 
 
 @app.route("/")
