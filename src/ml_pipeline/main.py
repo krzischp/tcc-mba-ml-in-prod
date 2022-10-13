@@ -90,9 +90,9 @@ def run_inference(run_id: str, queue: str):
 
     for idx, predict in enumerate(predictions, 1):
         print(
-            f'Image number {idx} ----- mlflow_run_id: {predict["mlflow_run_id"]} '
+            f'Image number {idx}'
+            f'\nmlflow_run_id: {predict["mlflow_run_id"]} '
             f'image_id: {predict["image_name"][0].rsplit("/", 1)[1]} '
-            f'category_prediction: {predict["category_prediction"]}'
         )
         mlflow_run_id = predict["mlflow_run_id"]
 
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     print(f"AUC Candidate branch {branch_name}: {auc_candidate}")
     print(f"AUC Threshold: {auc_threshold}")
 
-    if auc_prod > auc_candidate or auc_threshold > auc_candidate:
+    if float(auc_prod) > float(auc_candidate) or float(auc_threshold) > float(auc_candidate):
         print("Requisites for new model were not match!")
         sys.exit(1)
 
