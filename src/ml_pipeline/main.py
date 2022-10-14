@@ -92,7 +92,7 @@ def run_inference(run_id: str, queue: str):
         logger.info(
             f'Image number {idx} ----- mlflow_run_id: {predict["mlflow_run_id"]} '
             f'image_id: {predict["image_name"][0].rsplit("/", 1)[1]} '
-            f'category_prediction: {predict["category_prediction"]}'
+            f'category_prediction: {predict["category_prediction_index"]}'
         )
         mlflow_run_id = predict["mlflow_run_id"]
 

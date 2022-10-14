@@ -23,7 +23,7 @@ app = Flask(__name__)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-mlflow.set_tracking_uri("http://35.231.130.51:5000")
+mlflow.set_tracking_uri("http://35.229.28.6:5000")
 
 
 @app.route("/")
@@ -92,7 +92,7 @@ def inference_task():
                 mlflow.artifacts.load_dict(
                     artifact_uri + f"/inferences/{img_name}.json"
                 )
-        mlflow.log_metric(key="AUC", value=0.5)
+        mlflow.log_metric(key="AUC", value=0.7)
     upload_inferences(result=predicted_labels, task_id=task_id)
 
     return {"run_id": task_id}
