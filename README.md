@@ -10,7 +10,7 @@ This project is a scalable generic solution to deploy a fashion images classifie
 
 ## Tutorial
 
-Link: <link>
+[Youtube Link](https://www.youtube.com/watch?v=HsDMG9xBzlg)
 
 ## Kubernetes (k8s) Cluster
 
