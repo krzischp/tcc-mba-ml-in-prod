@@ -1,6 +1,6 @@
 runtime: custom
 env: flex
-service: inference
+service: inference-iti-v3
 instance_class: F4
 resources:
   cpu: 4
