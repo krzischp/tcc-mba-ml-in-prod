@@ -82,17 +82,17 @@ def run_inference(run_id: str, queue: str):
     bucket_file = f"tasks/{run_id}/inferences.json"
     content = download_blob_into_memory(bucket_file)
     predictions = json.loads(content)
-    logger.info(f"Number of predictions: {len(predictions)}")
-    logger.info(
+    print(f"Number of predictions: {len(predictions)}")
+    print(
         f'Prediction output per image: massive_attr-{len(predictions[0]["massive_attr"])}, '
         f'categories-{len(predictions[0]["categories"])}'
     )
 
     for idx, predict in enumerate(predictions, 1):
-        logger.info(
-            f'Image number {idx} ----- mlflow_run_id: {predict["mlflow_run_id"]} '
+        print(
+            f'Image number {idx}'
+            f'mlflow_run_id: {predict["mlflow_run_id"]} '
             f'image_id: {predict["image_name"][0].rsplit("/", 1)[1]} '
-            f'category_prediction: {predict["category_prediction_index"]}'
         )
         mlflow_run_id = predict["mlflow_run_id"]
 
@@ -105,21 +105,24 @@ def run_inference(run_id: str, queue: str):
 if __name__ == "__main__":
     branch_name = sys.argv[1]
     auc_threshold = sys.argv[2]
-    logger.info("Branch Name: %s", branch_name)
-    logger.info("AUC threshold: %s", auc_threshold)
+    print(f"Branch Name: {branch_name}")
+    print(f"AUC threshold: {auc_threshold}")
 
-    logger.info("Running inference for current model")
+    print("Running inference for current model")
     run_id_prod = run_imagery(queue="imagery")
     auc_prod = run_inference(run_id=run_id_prod, queue="inference")
 
-    logger.info("Running inference for candidate model")
+    print("Running inference for candidate model")
     run_id_candidate = run_imagery(queue=f"imagery-{branch_name}")
     auc_candidate = run_inference(run_id=run_id_prod, queue=f"inference-{branch_name}")
 
-    logger.info("AUC Prod: %s", auc_prod)
-    logger.info("AUC Candidate branch %s: %s", branch_name, auc_candidate)
-    logger.info("AUC Threshold: %s", auc_threshold)
+    print("AUC Prod: {auc_prod}")
+    print(f"AUC Candidate branch {branch_name}: {auc_candidate}")
+    print(f"AUC Threshold: {auc_threshold}")
 
-    if auc_prod < auc_candidate or auc_candidate < auc_threshold:
-        logger.info("Requisites for new model were not match!")
+    if float(auc_prod) > float(auc_candidate) or float(auc_threshold) > float(auc_candidate):
+        print("Requisites for new model were not match!")
         sys.exit(1)
+
+    print("Requisites for new model were match!")
+    print("Check MLFlow http://35.231.130.51:5000/#/ for more information about the runs")
